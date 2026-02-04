@@ -120,7 +120,7 @@ function sendTripifyID(btnElement) {
     
     // ALLOW REGENERATION
     btnElement.innerText = "Regenerate ID";
-    btnElement.disabled = false; // Keep enabled to allow regeneration
+    btnElement.disabled = false; // Keep enabled
 }
 
 // --- HOTEL LOGIC ---
@@ -175,7 +175,10 @@ function handleSearch(type) {
         mapWrapper.classList.remove('hidden');
         if(!map) {
             map = L.map('map-container').setView([20, 78], 3);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
+            // UPDATED TILE LAYER TO ESRI (Google-like)
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+                attribution: 'Tiles &copy; Esri'
+            }).addTo(map);
         }
         setTimeout(() => { map.invalidateSize(); }, 100);
         mapMarkers.forEach(m => map.removeLayer(m));
@@ -437,7 +440,6 @@ function renderPassengerForms(totalCount, labelType, adultCount = 0, childCount 
 function generateFormHTML(index, typeLabel, country) {
     const showID = (typeLabel === "Passenger" && index === 1) || (typeLabel === "Adult" && index === 1);
     
-    // No ID for Children
     const idLabel = showID ? "Enter Tripify ID *" : (typeLabel === "Child" ? "" : "ID Number *");
     const idPlaceholder = showID ? "Enter ID sent to email" : "National ID";
     const idId = showID ? `id="p1-id"` : "";
