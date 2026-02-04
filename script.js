@@ -1,36 +1,80 @@
-// --- 1. GLOBAL AIRPORT & CITY DATABASE (EXPANDED) ---
+// --- 1. GLOBAL AIRPORT & CITY DATABASE (WITH REAL COORDINATES) ---
 const globalAirports = [
-    {c:"India", city:"Mumbai", code:"BOM"}, {c:"India", city:"Delhi", code:"DEL"}, {c:"India", city:"Bangalore", code:"BLR"},
-    {c:"India", city:"Chennai", code:"MAA"}, {c:"India", city:"Hyderabad", code:"HYD"}, {c:"India", city:"Kolkata", code:"CCU"},
-    {c:"India", city:"Ahmedabad", code:"AMD"}, {c:"India", city:"Pune", code:"PNQ"}, {c:"India", city:"Goa", code:"GOI"},
-    {c:"India", city:"Jaipur", code:"JAI"}, {c:"India", city:"Lucknow", code:"LKO"}, {c:"India", city:"Kochi", code:"COK"},
-    {c:"India", city:"Srinagar", code:"SXR"}, {c:"India", city:"Varanasi", code:"VNS"}, {c:"India", city:"Indore", code:"IDR"},
+    // INDIA
+    {c:"India", city:"Mumbai", code:"BOM", lat: 19.0760, lng: 72.8777}, 
+    {c:"India", city:"Delhi", code:"DEL", lat: 28.6139, lng: 77.2090}, 
+    {c:"India", city:"Bangalore", code:"BLR", lat: 12.9716, lng: 77.5946},
+    {c:"India", city:"Chennai", code:"MAA", lat: 13.0827, lng: 80.2707}, 
+    {c:"India", city:"Hyderabad", code:"HYD", lat: 17.3850, lng: 78.4867}, 
+    {c:"India", city:"Kolkata", code:"CCU", lat: 22.5726, lng: 88.3639},
+    {c:"India", city:"Ahmedabad", code:"AMD", lat: 23.0225, lng: 72.5714}, 
+    {c:"India", city:"Pune", code:"PNQ", lat: 18.5204, lng: 73.8567}, 
+    {c:"India", city:"Goa", code:"GOI", lat: 15.2993, lng: 74.1240},
+    {c:"India", city:"Jaipur", code:"JAI", lat: 26.9124, lng: 75.7873}, 
+    {c:"India", city:"Lucknow", code:"LKO", lat: 26.8467, lng: 80.9462}, 
+    {c:"India", city:"Kochi", code:"COK", lat: 9.9312, lng: 76.2673},
+    {c:"India", city:"Srinagar", code:"SXR", lat: 34.0837, lng: 74.7973}, 
+    {c:"India", city:"Varanasi", code:"VNS", lat: 25.3176, lng: 82.9739}, 
+    {c:"India", city:"Indore", code:"IDR", lat: 22.7196, lng: 75.8577},
     
-    {c:"USA", city:"New York (JFK)", code:"JFK"}, {c:"USA", city:"Los Angeles", code:"LAX"}, {c:"USA", city:"Chicago", code:"ORD"},
-    {c:"USA", city:"San Francisco", code:"SFO"}, {c:"USA", city:"Miami", code:"MIA"}, {c:"USA", city:"Dallas", code:"DFW"},
-    {c:"USA", city:"Seattle", code:"SEA"}, {c:"USA", city:"Las Vegas", code:"LAS"}, {c:"USA", city:"Orlando", code:"MCO"},
-    {c:"Canada", city:"Toronto", code:"YYZ"}, {c:"Canada", city:"Vancouver", code:"YVR"}, {c:"Canada", city:"Montreal", code:"YUL"},
+    // USA & CANADA
+    {c:"USA", city:"New York (JFK)", code:"JFK", lat: 40.7128, lng: -74.0060}, 
+    {c:"USA", city:"Los Angeles", code:"LAX", lat: 34.0522, lng: -118.2437}, 
+    {c:"USA", city:"Chicago", code:"ORD", lat: 41.8781, lng: -87.6298},
+    {c:"USA", city:"San Francisco", code:"SFO", lat: 37.7749, lng: -122.4194}, 
+    {c:"USA", city:"Miami", code:"MIA", lat: 25.7617, lng: -80.1918}, 
+    {c:"USA", city:"Dallas", code:"DFW", lat: 32.7767, lng: -96.7970},
+    {c:"USA", city:"Seattle", code:"SEA", lat: 47.6062, lng: -122.3321}, 
+    {c:"USA", city:"Las Vegas", code:"LAS", lat: 36.1699, lng: -115.1398}, 
+    {c:"USA", city:"Orlando", code:"MCO", lat: 28.5383, lng: -81.3792},
+    {c:"Canada", city:"Toronto", code:"YYZ", lat: 43.6510, lng: -79.3470}, 
+    {c:"Canada", city:"Vancouver", code:"YVR", lat: 49.2827, lng: -123.1207}, 
+    {c:"Canada", city:"Montreal", code:"YUL", lat: 45.5017, lng: -73.5673},
 
-    {c:"UK", city:"London Heathrow", code:"LHR"}, {c:"UK", city:"London Gatwick", code:"LGW"}, {c:"UK", city:"Manchester", code:"MAN"},
-    {c:"Germany", city:"Frankfurt", code:"FRA"}, {c:"Germany", city:"Munich", code:"MUC"}, {c:"Germany", city:"Berlin", code:"BER"},
-    {c:"France", city:"Paris CDG", code:"CDG"}, {c:"France", city:"Nice", code:"NCE"},
-    {c:"Italy", city:"Rome", code:"FCO"}, {c:"Italy", city:"Milan", code:"MXP"}, {c:"Italy", city:"Venice", code:"VCE"},
-    {c:"Spain", city:"Madrid", code:"MAD"}, {c:"Spain", city:"Barcelona", code:"BCN"},
-    {c:"Russia", city:"Moscow", code:"SVO"}, {c:"Russia", city:"St. Petersburg", code:"LED"},
+    // UK & EUROPE
+    {c:"UK", city:"London Heathrow", code:"LHR", lat: 51.5074, lng: -0.1278}, 
+    {c:"UK", city:"London Gatwick", code:"LGW", lat: 51.1537, lng: -0.1821}, 
+    {c:"UK", city:"Manchester", code:"MAN", lat: 53.4808, lng: -2.2426},
+    {c:"Germany", city:"Frankfurt", code:"FRA", lat: 50.1109, lng: 8.6821}, 
+    {c:"Germany", city:"Munich", code:"MUC", lat: 48.1351, lng: 11.5820}, 
+    {c:"Germany", city:"Berlin", code:"BER", lat: 52.5200, lng: 13.4050},
+    {c:"France", city:"Paris CDG", code:"CDG", lat: 48.8566, lng: 2.3522}, 
+    {c:"France", city:"Nice", code:"NCE", lat: 43.7102, lng: 7.2620},
+    {c:"Italy", city:"Rome", code:"FCO", lat: 41.9028, lng: 12.4964}, 
+    {c:"Italy", city:"Milan", code:"MXP", lat: 45.4642, lng: 9.1900}, 
+    {c:"Italy", city:"Venice", code:"VCE", lat: 45.4408, lng: 12.3155},
+    {c:"Spain", city:"Madrid", code:"MAD", lat: 40.4168, lng: -3.7038}, 
+    {c:"Spain", city:"Barcelona", code:"BCN", lat: 41.3851, lng: 2.1734},
+    {c:"Russia", city:"Moscow", code:"SVO", lat: 55.7558, lng: 37.6173}, 
+    {c:"Russia", city:"St. Petersburg", code:"LED", lat: 59.9343, lng: 30.3351},
 
-    {c:"Australia", city:"Sydney", code:"SYD"}, {c:"Australia", city:"Melbourne", code:"MEL"}, {c:"Australia", city:"Brisbane", code:"BNE"},
-    {c:"Australia", city:"Perth", code:"PER"}, {c:"Australia", city:"Adelaide", code:"ADL"},
-    {c:"New Zealand", city:"Auckland", code:"AKL"}, {c:"New Zealand", city:"Wellington", code:"WLG"},
+    // AUSTRALIA & NEW ZEALAND
+    {c:"Australia", city:"Sydney", code:"SYD", lat: -33.8688, lng: 151.2093}, 
+    {c:"Australia", city:"Melbourne", code:"MEL", lat: -37.8136, lng: 144.9631}, 
+    {c:"Australia", city:"Brisbane", code:"BNE", lat: -27.4705, lng: 153.0260},
+    {c:"Australia", city:"Perth", code:"PER", lat: -31.9505, lng: 115.8605}, 
+    {c:"Australia", city:"Adelaide", code:"ADL", lat: -34.9285, lng: 138.6007},
+    {c:"New Zealand", city:"Auckland", code:"AKL", lat: -36.8485, lng: 174.7633}, 
+    {c:"New Zealand", city:"Wellington", code:"WLG", lat: -41.2865, lng: 174.7762},
 
-    {c:"UAE", city:"Dubai", code:"DXB"}, {c:"UAE", city:"Abu Dhabi", code:"AUH"},
-    {c:"Singapore", city:"Singapore", code:"SIN"},
-    {c:"Thailand", city:"Bangkok", code:"BKK"}, {c:"Thailand", city:"Phuket", code:"HKT"},
-    {c:"Japan", city:"Tokyo Haneda", code:"HND"}, {c:"Japan", city:"Osaka", code:"KIX"},
-    {c:"China", city:"Beijing", code:"PEK"}, {c:"China", city:"Shanghai", code:"PVG"},
-    {c:"South Korea", city:"Seoul", code:"ICN"}, {c:"South Korea", city:"Busan", code:"PUS"},
+    // ASIA & MIDDLE EAST
+    {c:"UAE", city:"Dubai", code:"DXB", lat: 25.276987, lng: 55.296249}, 
+    {c:"UAE", city:"Abu Dhabi", code:"AUH", lat: 24.4539, lng: 54.3773},
+    {c:"Singapore", city:"Singapore", code:"SIN", lat: 1.3521, lng: 103.8198},
+    {c:"Thailand", city:"Bangkok", code:"BKK", lat: 13.7563, lng: 100.5018}, 
+    {c:"Thailand", city:"Phuket", code:"HKT", lat: 7.8804, lng: 98.3923},
+    {c:"Japan", city:"Tokyo Haneda", code:"HND", lat: 35.6762, lng: 139.6503}, 
+    {c:"Japan", city:"Osaka", code:"KIX", lat: 34.6937, lng: 135.5023},
+    {c:"China", city:"Beijing", code:"PEK", lat: 39.9042, lng: 116.4074}, 
+    {c:"China", city:"Shanghai", code:"PVG", lat: 31.2304, lng: 121.4737},
+    {c:"South Korea", city:"Seoul", code:"ICN", lat: 37.5665, lng: 126.9780}, 
+    {c:"South Korea", city:"Busan", code:"PUS", lat: 35.1796, lng: 129.0756},
 
-    {c:"Brazil", city:"Sao Paulo", code:"GRU"}, {c:"Brazil", city:"Rio de Janeiro", code:"GIG"},
-    {c:"South Africa", city:"Johannesburg", code:"JNB"}, {c:"South Africa", city:"Cape Town", code:"CPT"}
+    // SOUTH AMERICA & AFRICA
+    {c:"Brazil", city:"Sao Paulo", code:"GRU", lat: -23.5505, lng: -46.6333}, 
+    {c:"Brazil", city:"Rio de Janeiro", code:"GIG", lat: -22.9068, lng: -43.1729},
+    {c:"South Africa", city:"Johannesburg", code:"JNB", lat: -26.2041, lng: 28.0473}, 
+    {c:"South Africa", city:"Cape Town", code:"CPT", lat: -33.9249, lng: 18.4241}
 ];
 
 const airlineDatabase = [
@@ -47,53 +91,42 @@ const roomTypes = ["Standard", "Deluxe", "Executive Suite", "Ocean View", "Famil
 const bedTypes = ["1 King Bed", "2 Queen Beds", "1 Queen Bed", "2 Twin Beds"];
 const views = ["City View", "Sea View", "Garden View", "Pool View"];
 
-const idLabels = { "India": "Aadhar Card", "USA": "SSN", "UK": "NI Number", "Australia": "TFN", "UAE": "Emirates ID" };
-
 let map, mapMarkers = [], mapRoute, selectedTrip = {}, selectedPaymentMethod = "", bookingHistory = []; 
 let generatedTripifyID = null;
 
 window.onload = function() {
-    // 1. DATE RESTRICTIONS (365 Days)
+    // DATE RESTRICTIONS (365 Days)
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    
     const maxDate = new Date();
     maxDate.setDate(today.getDate() + 365);
     const maxDateStr = maxDate.toISOString().split('T')[0];
 
-    // Flight
     const fDate = document.getElementById('flight-date');
     fDate.setAttribute('min', todayStr);
     fDate.setAttribute('max', maxDateStr);
     fDate.value = todayStr;
     fDate.addEventListener('input', function() { forceDateLimit(this, maxDateStr); });
 
-    // Hotel
     const hCheckin = document.getElementById('hotel-checkin');
     const hCheckout = document.getElementById('hotel-checkout');
-
     hCheckin.setAttribute('min', todayStr);
     hCheckin.setAttribute('max', maxDateStr);
     hCheckin.addEventListener('input', function() { forceDateLimit(this, maxDateStr); });
-
     hCheckout.setAttribute('min', todayStr);
     hCheckout.setAttribute('max', maxDateStr);
     hCheckout.addEventListener('input', function() { forceDateLimit(this, maxDateStr); });
-
     hCheckin.addEventListener('change', function() {
         hCheckout.setAttribute('min', this.value);
         if(hCheckout.value && hCheckout.value < this.value) hCheckout.value = this.value;
     });
 
-    // 2. POPULATE LISTS
+    // POPULATE LISTS
     const countries = [...new Set(globalAirports.map(item => item.c))].sort();
-    
     const countryList = document.getElementById('country-list-data');
     countries.forEach(c => { let op = document.createElement('option'); op.value = c; countryList.appendChild(op); });
-    
     const hotelCountryList = document.getElementById('hotel-country-list');
     countries.forEach(c => { let op = document.createElement('option'); op.value = c; hotelCountryList.appendChild(op); });
-
     document.getElementById('user-country-input').value = "India";
 };
 
@@ -105,41 +138,30 @@ function forceDateLimit(input, maxDate) {
     }
 }
 
-// --- TRIPIFY ID SIMULATION ---
 function sendTripifyID(btnElement) {
     const email = document.getElementById('contact-email').value;
-    if (!email) {
-        alert("Please enter an email address first.");
-        return;
-    }
-    
+    if (!email) { alert("Please enter an email address first."); return; }
     const randomNum = Math.floor(100000 + Math.random() * 900000);
     generatedTripifyID = "TP" + randomNum;
-
     alert(`Simulation: Email sent to ${email}\n\nYour Tripify Verification ID is: ${generatedTripifyID}`);
-    
-    // ALLOW REGENERATION
     btnElement.innerText = "Regenerate ID";
-    btnElement.disabled = false; // Keep enabled
+    btnElement.disabled = false;
 }
 
-// --- HOTEL LOGIC ---
 function populateHotelCities() {
     const country = document.getElementById('hotel-country').value;
     const cityList = document.getElementById('hotel-city-list');
     const cityInput = document.getElementById('hotel-city');
-    cityInput.value = ''; 
-    cityList.innerHTML = '';
+    cityInput.value = ''; cityList.innerHTML = '';
     if(!country) return;
     const cities = globalAirports.filter(item => item.c === country);
     cities.forEach(item => {
         let op = document.createElement('option');
-        op.value = item.city.split('(')[0].trim();
+        op.value = item.city;
         cityList.appendChild(op);
     });
 }
 
-// --- SEARCH LOGIC ---
 function filterCities(inputElement, type) {
     const query = inputElement.value.toLowerCase();
     const userCountry = document.getElementById('user-country-input').value; 
@@ -175,7 +197,6 @@ function handleSearch(type) {
         mapWrapper.classList.remove('hidden');
         if(!map) {
             map = L.map('map-container').setView([20, 78], 3);
-            // UPDATED TILE LAYER TO ESRI (Google-like)
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
                 attribution: 'Tiles &copy; Esri'
             }).addTo(map);
@@ -202,10 +223,12 @@ function handleSearch(type) {
 
             headerTitle.innerText = "Available Flights";
             if (map) {
-                const oCoord = getFakeCoords(originVal);
-                const dCoord = getFakeCoords(destVal);
-                const m1 = L.marker(oCoord).addTo(map).bindPopup("Origin");
-                const m2 = L.marker(dCoord).addTo(map).bindPopup("Dest");
+                // USE REAL COORDINATES
+                const oCoord = getCityCoords(originVal);
+                const dCoord = getCityCoords(destVal);
+                
+                const m1 = L.marker(oCoord).addTo(map).bindPopup("Origin: " + originVal);
+                const m2 = L.marker(dCoord).addTo(map).bindPopup("Dest: " + destVal);
                 mapMarkers.push(m1, m2);
                 mapRoute = L.polyline([oCoord, dCoord], {color: '#2563EB', weight: 4}).addTo(map);
                 map.fitBounds(mapRoute.getBounds(), {padding: [50, 50]});
@@ -218,7 +241,6 @@ function handleSearch(type) {
             const city = document.getElementById('hotel-city').value;
             const checkin = document.getElementById('hotel-checkin').value;
             const checkout = document.getElementById('hotel-checkout').value;
-            const guests = parseInt(document.getElementById('hotel-guests').value) || 1;
 
             if(!country || !city || !checkin || !checkout) { alert("Please fill all hotel fields."); return; }
 
@@ -235,10 +257,27 @@ function handleSearch(type) {
     }, 800);
 }
 
-function getFakeCoords(cityString) {
-    let hash = 0;
-    for (let i = 0; i < cityString.length; i++) hash = cityString.charCodeAt(i) + ((hash << 5) - hash);
-    return [(Math.abs(hash) % 18000) / 100, (Math.abs(hash) % 36000) / 100]; 
+// --- NEW FUNCTION: GET REAL COORDINATES ---
+function getCityCoords(cityString) {
+    // Extract code (e.g. "Indore (IDR)" -> "IDR")
+    const match = cityString.match(/\(([^)]+)\)/);
+    const code = match ? match[1] : null;
+    
+    // Look for airport by code
+    let cityObj = globalAirports.find(item => item.code === code);
+    
+    // Fallback: Look by city name if code fails
+    if (!cityObj) {
+        const cleanName = cityString.split('(')[0].trim();
+        cityObj = globalAirports.find(item => item.city === cleanName);
+    }
+
+    if (cityObj) {
+        return [cityObj.lat, cityObj.lng];
+    } else {
+        // Default Center of India if not found
+        return [20.5937, 78.9629]; 
+    }
 }
 
 function renderFlightResults(origin, dest, date, flightClass, tripType, originCountry) {
@@ -273,7 +312,7 @@ function renderHotelResults(city, nights) {
         const hotelName = `${hotelChains[Math.floor(Math.random() * hotelChains.length)]} ${city.split('(')[0]}`;
         const randomRoom = roomTypes[Math.floor(Math.random() * roomTypes.length)]; 
         const pricePerNight = 80 + Math.floor(Math.random() * 300);
-        const totalPrice = pricePerNight * nights; // Base Price
+        const totalPrice = pricePerNight * nights;
         
         resultsArea.innerHTML += `
             <div class="hotel-card">
@@ -325,14 +364,10 @@ function openHotelDetails(name, roomType) {
 
 function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
 
-// --- REFACTORED BOOKING LOGIC ---
+// --- BOOKING LOGIC ---
 function initBooking(name, price, type, routeInfo, roomType = "") {
     const date = document.getElementById(type === 'flight' ? 'flight-date' : 'hotel-checkin').value;
-    
-    let checkOut = "";
-    if (type === 'hotel') {
-        checkOut = document.getElementById('hotel-checkout').value;
-    }
+    let checkOut = (type === 'hotel') ? document.getElementById('hotel-checkout').value : "";
 
     selectedTrip = { name, price, type, routeInfo, date, checkOut, roomType };
     document.getElementById('modal-trip-name').innerText = name;
@@ -384,7 +419,6 @@ function setupHotelForms(maxGuests) {
         </div>
         <p style="text-align:right; font-size:0.8rem; color:#6B7280; margin-top:-10px; margin-bottom:15px;">Max Allowed Guests: <strong>${maxGuests}</strong></p>
     `;
-    
     handleHotelGuestChange(); 
 }
 
@@ -396,16 +430,13 @@ function handleHotelGuestChange() {
     let children = parseInt(childrenInput.value) || 0;
     
     if (adults + children > selectedTrip.maxGuests) {
-        alert(`Total guests cannot exceed ${selectedTrip.maxGuests} (as selected in search).`);
-        adults = selectedTrip.maxGuests;
-        children = 0;
-        adultsInput.value = adults;
-        childrenInput.value = children;
+        alert(`Total guests cannot exceed ${selectedTrip.maxGuests}.`);
+        adults = selectedTrip.maxGuests; children = 0;
+        adultsInput.value = adults; childrenInput.value = children;
     }
 
     selectedTrip.total = (selectedTrip.unitPrice * adults) + (selectedTrip.unitPrice * 0.5 * children);
     document.getElementById('modal-total').innerText = `$${Math.round(selectedTrip.total)}`;
-
     renderPassengerForms(adults + children, "Guest", adults, children);
 }
 
@@ -413,24 +444,13 @@ function renderPassengerForms(totalCount, labelType, adultCount = 0, childCount 
     const formContainer = document.getElementById('passenger-forms');
     let html = '';
     const userCountry = document.getElementById('user-country-input').value;
-
-    let adultIdx = 1;
-    let childIdx = 1;
+    let adultIdx = 1, childIdx = 1;
 
     if (labelType === "Passenger") {
-        for(let i=1; i<=totalCount; i++) {
-            html += generateFormHTML(i, "Passenger", userCountry);
-        }
-    } 
-    else {
-        // Adult Loop with specific index
-        for(let i=1; i<=adultCount; i++) {
-            html += generateFormHTML(adultIdx++, "Adult", userCountry);
-        }
-        // Child Loop with specific index
-        for(let i=1; i<=childCount; i++) {
-            html += generateFormHTML(childIdx++, "Child", userCountry);
-        }
+        for(let i=1; i<=totalCount; i++) html += generateFormHTML(i, "Passenger", userCountry);
+    } else {
+        for(let i=1; i<=adultCount; i++) html += generateFormHTML(adultIdx++, "Adult", userCountry);
+        for(let i=1; i<=childCount; i++) html += generateFormHTML(childIdx++, "Child", userCountry);
     }
 
     html += `<div class="passenger-item" style="border-left: 4px solid #2563EB;"><h4 class="form-section-title">Security</h4><div class="input-wrapper"><label>Set Booking PIN (4 Digits) *</label><input type="password" id="booking-pin" class="input-field mandatory" maxlength="4" placeholder="1234"></div></div>`;
@@ -439,20 +459,12 @@ function renderPassengerForms(totalCount, labelType, adultCount = 0, childCount 
 
 function generateFormHTML(index, typeLabel, country) {
     const showID = (typeLabel === "Passenger" && index === 1) || (typeLabel === "Adult" && index === 1);
-    
     const idLabel = showID ? "Enter Tripify ID *" : (typeLabel === "Child" ? "" : "ID Number *");
     const idPlaceholder = showID ? "Enter ID sent to email" : "National ID";
     const idId = showID ? `id="p1-id"` : "";
-    
     const color = (typeLabel === "Child") ? "#10B981" : "#E5E7EB"; 
     const ageLimit = (typeLabel === "Child") ? 'max="17"' : 'min="18"';
-
-    let extraFieldHTML = "";
-    if (typeLabel !== "Child") {
-        extraFieldHTML = `<div class="input-wrapper"><label>${idLabel}</label><input type="text" ${idId} class="input-field mandatory" placeholder="${idPlaceholder}"></div>`;
-    } else {
-        extraFieldHTML = `<div class="input-wrapper"></div>`; 
-    }
+    let extraFieldHTML = typeLabel !== "Child" ? `<div class="input-wrapper"><label>${idLabel}</label><input type="text" ${idId} class="input-field mandatory" placeholder="${idPlaceholder}"></div>` : `<div class="input-wrapper"></div>`; 
 
     return `
     <div class="passenger-item" style="border-left: 4px solid ${color};">
@@ -478,12 +490,8 @@ function proceedToPayment() {
     }
 
     const enteredID = document.getElementById('p1-id').value.trim();
-    if (!generatedTripifyID) {
-        alert("Please generate a Tripify ID first by clicking 'Send Tripify ID'.");
-        return;
-    }
-    if (enteredID !== generatedTripifyID) {
-        alert("Invalid Tripify ID! Please check the alert popup for the correct code.");
+    if (!generatedTripifyID || enteredID !== generatedTripifyID) {
+        alert("Invalid or missing Tripify ID. Please generate or check your ID.");
         return;
     }
 
@@ -513,10 +521,7 @@ function generateTicket() {
     let p1Name = "Guest";
     const p1First = document.getElementById('p1-first') || document.getElementById('adult1-first');
     const p1Last = document.getElementById('p1-last') || document.getElementById('adult1-last');
-    
-    if (p1First && p1Last) {
-        p1Name = p1First.value + " " + p1Last.value;
-    }
+    if (p1First && p1Last) p1Name = p1First.value + " " + p1Last.value;
 
     const pin = document.getElementById('booking-pin').value;
     const pnr = "TRIP" + Math.floor(Math.random() * 100000);
@@ -530,10 +535,8 @@ function generateTicket() {
         document.getElementById('ticket-flight-header').classList.remove('hidden');
         document.getElementById('ticket-hotel-header').classList.add('hidden');
         document.getElementById('ticket-date-field').classList.remove('hidden');
-
         document.getElementById('ticket-origin-code').innerText = selectedTrip.routeInfo.split('->')[0].trim().substring(0,3).toUpperCase();
         document.getElementById('ticket-dest-code').innerText = selectedTrip.routeInfo.split('->')[1].trim().substring(0,3).toUpperCase();
-        
         document.getElementById('ticket-lbl-provider').innerText = "Airline";
         document.getElementById('ticket-lbl-class').innerText = "Class";
         document.getElementById('ticket-class-display').innerText = "Economy";
@@ -542,10 +545,8 @@ function generateTicket() {
         document.getElementById('ticket-flight-header').classList.add('hidden');
         document.getElementById('ticket-hotel-header').classList.remove('hidden');
         document.getElementById('ticket-date-field').classList.add('hidden'); 
-
         document.getElementById('ticket-checkin-date').innerText = selectedTrip.date;
         document.getElementById('ticket-checkout-date').innerText = selectedTrip.checkOut;
-
         document.getElementById('ticket-lbl-provider').innerText = "Hotel";
         document.getElementById('ticket-lbl-class').innerText = "Room";
         document.getElementById('ticket-class-display').innerText = selectedTrip.roomType;
@@ -568,11 +569,8 @@ function switchTab(tab) {
     document.getElementById('flight-section').classList.toggle('hidden', tab !== 'flights');
     document.getElementById('hotel-section').classList.toggle('hidden', tab !== 'hotels');
     document.getElementById('main-content').classList.toggle('hidden', tab !== 'flights'); 
-    
-    // Clear results
     document.getElementById('results-area').innerHTML = '';
     document.getElementById('results-count').innerText = '';
-    
     document.getElementById('history-view').classList.add('hidden');
     document.getElementById('main-hero').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -585,11 +583,9 @@ function showHistory() {
     document.getElementById('history-view').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('btn-history').classList.add('active');
-    
     const list = document.getElementById('history-list');
     list.innerHTML = '';
     if(bookingHistory.length === 0) { list.innerHTML = '<p class="text-muted" style="text-align:center;">No bookings found.</p>'; return; }
-    
     bookingHistory.forEach(b => {
         let btn = b.status === 'Confirmed' ? `<button class="btn-danger" onclick="cancelHistoryBooking('${b.pnr}')">Cancel</button>` : `<span class="badge-cancelled">Cancelled</span>`;
         list.innerHTML += `<div class="history-card"><div class="history-details"><h3>${b.title}</h3><p>${b.meta} • ${b.date}</p><small>PNR: ${b.pnr}</small></div><div class="history-actions"><strong>$${b.price}</strong>${btn}</div></div>`;
