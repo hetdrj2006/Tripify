@@ -201,5 +201,4 @@ body { background-color: var(--bg-light); color: var(--text-main); line-height: 
     /* Modals */
     .modal-content { width: 95%; max-height: 85vh; }
     .grid-2 { grid-template-columns: 1fr; }
-}
- 
+} 
