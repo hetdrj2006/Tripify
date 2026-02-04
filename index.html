@@ -5,10 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Tripify | Premium Travel</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
+
+    <div id="intro-overlay">
+        <div class="intro-content">
+            <h1 class="intro-logo">Tripify.</h1>
+            <p class="intro-tagline">
+                <span class="typewriter-text part-1">Move the World, Your Way!</span><br>
+            </p>
+            <button class="btn-enter" onclick="enterSite()">Enter Site</button>
+        </div>
+    </div>
 
     <nav class="navbar">
         <div class="logo" onclick="switchTab('flights')" style="display: flex; align-items: center; cursor: pointer;">
@@ -25,7 +35,7 @@
 
     <header id="main-hero" class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">Move the World, Your Way!</h1>
+            <h1 class="hero-title">“Your gateway to unforgettable journeys”</h1>
             <p class="hero-subtitle">800+ Destinations. Comprehensive Data. Zero Clutter.</p>
             
             <div id="flight-section" class="search-container">
@@ -284,4 +294,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
