@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tripify | Premium Travel</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo" onclick="switchTab('flights')" style="display: flex; align-items: center; cursor: pointer;">
+            <img src="logo.jpg" alt="Tripify Logo" style="height: 40px; margin-right: 10px;">
+            Tripify.
+        </div>
+        <div class="nav-links">
+            <button id="btn-flights" class="nav-btn active" onclick="switchTab('flights')">Flights</button>
+            <button id="btn-hotels" class="nav-btn" onclick="switchTab('hotels')">Hotels</button>
+            <button id="btn-history" class="nav-btn" onclick="showHistory()">My Bookings</button>
+            <a href="#" class="btn-login">Sign In</a>
+        </div>
+    </nav>
+
+    <header id="main-hero" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Move the World Your Way!</h1>
+            <p class="hero-subtitle">800+ Destinations. Comprehensive Data. Zero Clutter.</p>
+            
+            <div id="flight-section" class="search-container">
+                <div class="search-context-bar">
+                    <div class="context-group">
+                        <label>Your Current Location</label>
+                        <input type="text" id="user-country-input" list="country-list-data" placeholder="Type Country (e.g. India)" onchange="refreshCityLogic()">
+                        <datalist id="country-list-data"></datalist>
+                    </div>
+                    
+                    <div class="context-group">
+                        <label>Travel Type</label>
+                        <div class="travel-type-wrapper">
+                            <label class="travel-option">
+                                <input type="radio" name="tripType" value="domestic" checked onclick="refreshCityLogic()">
+                                <span>Domestic</span>
+                            </label>
+                            <label class="travel-option">
+                                <input type="radio" name="tripType" value="international" onclick="refreshCityLogic()">
+                                <span>International</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="search-grid">
+                    <div class="input-group">
+                        <label>From</label>
+                        <input type="text" id="flight-origin" list="dynamic-list-origin" placeholder="Type city..." oninput="filterCities(this, 'origin')">
+                        <datalist id="dynamic-list-origin"></datalist>
+                    </div>
+                    <div class="input-group">
+                        <label>To</label>
+                        <input type="text" id="flight-destination" list="dynamic-list-dest" placeholder="Type city..." oninput="filterCities(this, 'dest')">
+                        <datalist id="dynamic-list-dest"></datalist>
+                    </div>
+                    <div class="input-group">
+                        <label>Date</label>
+                        <input type="date" id="flight-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Class</label>
+                        <select id="flight-class" class="input-select">
+                            <option value="Economy">Economy</option>
+                            <option value="Business">Business</option>
+                            <option value="First">First Class</option>
+                        </select>
+                    </div>
+                    <div class="input-group small-group">
+                        <label>Travelers</label>
+                        <input type="number" id="flight-passengers" min="1" max="10" value="1">
+                    </div>
+                </div>
+                
+                <div class="search-action">
+                    <button onclick="handleSearch('flight')">Search Flights</button>
+                </div>
+            </div>
+
+            <div id="hotel-section" class="search-container hidden">
+                <div class="search-grid">
+                    <div class="input-group">
+                        <label>Select Country (Mandatory)</label>
+                        <input type="text" id="hotel-country" list="hotel-country-list" placeholder="Select Country" onchange="populateHotelCities()">
+                        <datalist id="hotel-country-list"></datalist>
+                    </div>
+                    <div class="input-group">
+                        <label>Select City</label>
+                        <input type="text" id="hotel-city" list="hotel-city-list" placeholder="Select City">
+                        <datalist id="hotel-city-list"></datalist>
+                    </div>
+                    <div class="input-group">
+                        <label>Check-in</label>
+                        <input type="date" id="hotel-checkin">
+                    </div>
+                    <div class="input-group">
+                        <label>Check-out</label>
+                        <input type="date" id="hotel-checkout">
+                    </div>
+                    <div class="input-group small-group">
+                        <label>Total Guests</label>
+                        <input type="number" id="hotel-guests" value="2" min="1">
+                    </div>
+                </div>
+                <div class="search-action">
+                    <button onclick="handleSearch('hotel')">Search Hotels</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="main-content" class="hidden">
+        <div id="map-wrapper"><div id="map-container"></div></div>
+        <section id="results-header" class="results-header">
+            <h2>Available Options</h2>
+            <p id="results-count" class="text-muted">Searching...</p>
+        </section>
+        <section id="results-area" class="results-list"></section>
+    </main>
+
+    <main id="history-view" class="hidden">
+        <div class="history-container">
+            <h2 style="margin-bottom: 1.5rem;">My Bookings</h2>
+            <div id="history-list" class="history-list"></div>
+            <button class="btn-secondary" onclick="switchTab('flights')" style="margin-top: 2rem;">Back to Search</button>
+        </div>
+    </main>
+
+    <div id="details-modal" class="modal-overlay hidden">
+        <div class="modal-content small-modal">
+            <span class="close-btn" onclick="closeDetailsModal()">&times;</span>
+            <div class="modal-header"><h2 id="detail-airline">Details</h2></div>
+            <div class="detail-grid-container" id="detail-content"></div>
+            <div style="padding: 1.5rem;"><button class="btn-secondary full-width-btn" onclick="closeDetailsModal()">Close</button></div>
+        </div>
+    </div>
+
+    <div id="booking-modal" class="modal-overlay hidden">
+        <div class="modal-content wide-modal">
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <div class="modal-header">
+                <h2>Booking Details</h2>
+                <div class="trip-summary-banner">
+                    <div><span class="lbl" id="summary-lbl-1">Airline</span><strong id="modal-trip-name">Flight</strong></div>
+                    <div><span class="lbl" id="summary-lbl-2">Class</span><span id="modal-trip-class" class="badge-eco">Economy</span></div>
+                    <div style="text-align:right"><span class="lbl">Total</span><strong id="modal-total" class="text-blue">$0</strong></div>
+                </div>
+            </div>
+
+            <div id="booking-scroll-container" class="form-scroll-area">
+                
+                <div id="booking-step-1">
+                    <h4 class="form-section-title">Primary Contact</h4>
+                    <div class="grid-2">
+                        <div class="input-wrapper">
+                            <label>Email ID *</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="email" id="contact-email" class="input-field mandatory" placeholder="e.g. name@mail.com" style="flex:1;">
+                                <button onclick="sendTripifyID(this)" class="btn-secondary" style="padding: 0 1rem; font-size: 0.8rem; white-space: nowrap;">Send Tripify ID</button>
+                            </div>
+                        </div>
+                        <div class="input-wrapper">
+                            <label>Mobile Number *</label>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="contact-country-code" class="input-select" style="width: 80px; flex-shrink: 0;">
+                                    <option value="+91">+91</option>
+                                    <option value="+1">+1</option>
+                                    <option value="+44">+44</option>
+                                    <option value="+971">+971</option>
+                                    <option value="+61">+61</option>
+                                </select>
+                                <input type="tel" id="contact-phone" class="input-field mandatory" placeholder="9876543210" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)">
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="divider">
+                    
+                    <div id="guest-breakdown-section"></div>
+
+                    <div id="passenger-forms"></div>
+                </div>
+
+                <div id="booking-step-payment" class="hidden">
+                    <h3 style="margin-bottom:1.5rem;">Select Payment Mode</h3>
+                    <div class="payment-options">
+                        <div class="payment-card" onclick="selectPayment(this, 'Credit Card')">
+                            <div class="pay-icon">💳</div>
+                            <div class="pay-text"><strong>Credit/Debit Card</strong><p class="text-muted">Visa, Mastercard, RuPay</p></div>
+                        </div>
+                        <div class="payment-card" onclick="selectPayment(this, 'UPI')">
+                            <div class="pay-icon">📱</div>
+                            <div class="pay-text"><strong>UPI</strong><p class="text-muted">GPay, PhonePe, Paytm</p></div>
+                        </div>
+                        <div class="payment-card" onclick="selectPayment(this, 'Net Banking')">
+                            <div class="pay-icon">🏦</div>
+                            <div class="pay-text"><strong>Net Banking</strong><p class="text-muted">All Major Banks</p></div>
+                        </div>
+                    </div>
+                    <div id="payment-loader" class="hidden" style="text-align:center; margin-top:30px;">
+                        <div class="loader"></div>
+                        <p style="margin-top:10px; font-weight:600; color:#2563EB">Processing Secure Payment...</p>
+                    </div>
+                </div>
+
+                <div id="booking-step-3" class="hidden" style="text-align: center;">
+                    <div class="success-banner">
+                        <h2 style="color:#10B981; margin-bottom:0.5rem;">🎉 Booking Successful!</h2>
+                        <p style="color:#6B7280; font-size:0.9rem;">Your booking is confirmed.</p>
+                    </div>
+                    <div id="ticket-print-area" class="digital-ticket">
+                        <div class="ticket-top">
+                            <span class="brand">Tripify.</span>
+                            <span id="ticket-status" class="status-confirmed">CONFIRMED</span>
+                        </div>
+                        <div class="ticket-main">
+                            
+                            <div id="ticket-flight-header" class="ticket-route">
+                                <h2 id="ticket-origin-code">ORG</h2>
+                                <span class="plane-icon">✈</span>
+                                <h2 id="ticket-dest-code">DES</h2>
+                            </div>
+
+                            <div id="ticket-hotel-header" class="ticket-hotel-header hidden">
+                                <div class="hotel-dates-row">
+                                    <div class="date-group">
+                                        <span class="sub-label">CHECK-IN</span>
+                                        <h3 id="ticket-checkin-date">2023-10-01</h3>
+                                    </div>
+                                    <div class="stay-icon">
+                                        <span>🏨</span>
+                                    </div>
+                                    <div class="date-group">
+                                        <span class="sub-label">CHECK-OUT</span>
+                                        <h3 id="ticket-checkout-date">2023-10-05</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="ticket-info-grid">
+                                <div class="ticket-field">
+                                    <small id="ticket-lbl-pax">Passenger</small> 
+                                    <strong id="ticket-passenger">Name</strong>
+                                </div>
+                                <div class="ticket-field">
+                                    <small id="ticket-lbl-provider">Airline</small> 
+                                    <strong id="ticket-airline">Provider</strong>
+                                </div>
+                                <div class="ticket-field" id="ticket-date-field">
+                                    <small>Date</small> 
+                                    <strong id="ticket-date">Date</strong>
+                                </div>
+                                <div class="ticket-field">
+                                    <small id="ticket-lbl-class">Class</small> 
+                                    <strong id="ticket-class-display">Eco</strong>
+                                </div>
+                            </div>
+                            <div class="ticket-footer"><small>Booking Ref:</small> <strong id="ticket-pnr">123</strong></div>
+                        </div>
+                        <div class="barcode-strip"></div>
+                    </div>
+                    <div class="ticket-actions">
+                        <button class="btn-secondary" onclick="downloadTicket()">Download Ticket</button>
+                        <button class="btn-primary" onclick="closeModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modal-footer-action" class="modal-footer">
+                <button id="btn-proceed" class="btn-primary full-width-btn" onclick="proceedToPayment()">Proceed to Payment</button>
+                <button id="btn-pay-confirm" class="btn-primary full-width-btn hidden" onclick="confirmPayment()">Confirm & Pay</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
