@@ -1,6 +1,27 @@
-// --- 1. GLOBAL AIRPORT & CITY DATABASE (WITH REAL COORDINATES) ---
+// --- CURRENCY DATABASE ---
+const currencyData = {
+    "India": { code: "INR", symbol: "₹", rate: 84 },
+    "USA": { code: "USD", symbol: "$", rate: 1 },
+    "UK": { code: "GBP", symbol: "£", rate: 0.79 },
+    "Germany": { code: "EUR", symbol: "€", rate: 0.92 },
+    "France": { code: "EUR", symbol: "€", rate: 0.92 },
+    "Italy": { code: "EUR", symbol: "€", rate: 0.92 },
+    "Spain": { code: "EUR", symbol: "€", rate: 0.92 },
+    "UAE": { code: "AED", symbol: "AED", rate: 3.67 },
+    "Australia": { code: "AUD", symbol: "A$", rate: 1.53 },
+    "Canada": { code: "CAD", symbol: "C$", rate: 1.35 },
+    "Singapore": { code: "SGD", symbol: "S$", rate: 1.34 },
+    "Japan": { code: "JPY", symbol: "¥", rate: 150 },
+    "China": { code: "CNY", symbol: "¥", rate: 7.2 },
+    "Brazil": { code: "BRL", symbol: "R$", rate: 4.95 },
+    "South Africa": { code: "ZAR", symbol: "R", rate: 19 },
+    "Thailand": { code: "THB", symbol: "฿", rate: 36 },
+    "Russia": { code: "RUB", symbol: "₽", rate: 92 },
+    "South Korea": { code: "KRW", symbol: "₩", rate: 1330 }
+};
+
+// --- GLOBAL AIRPORT & CITY DATABASE ---
 const globalAirports = [
-    // INDIA
     {c:"India", city:"Mumbai", code:"BOM", lat: 19.0760, lng: 72.8777}, 
     {c:"India", city:"Delhi", code:"DEL", lat: 28.6139, lng: 77.2090}, 
     {c:"India", city:"Bangalore", code:"BLR", lat: 12.9716, lng: 77.5946},
@@ -17,7 +38,6 @@ const globalAirports = [
     {c:"India", city:"Varanasi", code:"VNS", lat: 25.3176, lng: 82.9739}, 
     {c:"India", city:"Indore", code:"IDR", lat: 22.7196, lng: 75.8577},
     
-    // USA & CANADA
     {c:"USA", city:"New York (JFK)", code:"JFK", lat: 40.7128, lng: -74.0060}, 
     {c:"USA", city:"Los Angeles", code:"LAX", lat: 34.0522, lng: -118.2437}, 
     {c:"USA", city:"Chicago", code:"ORD", lat: 41.8781, lng: -87.6298},
@@ -31,7 +51,6 @@ const globalAirports = [
     {c:"Canada", city:"Vancouver", code:"YVR", lat: 49.2827, lng: -123.1207}, 
     {c:"Canada", city:"Montreal", code:"YUL", lat: 45.5017, lng: -73.5673},
 
-    // UK & EUROPE
     {c:"UK", city:"London Heathrow", code:"LHR", lat: 51.5074, lng: -0.1278}, 
     {c:"UK", city:"London Gatwick", code:"LGW", lat: 51.1537, lng: -0.1821}, 
     {c:"UK", city:"Manchester", code:"MAN", lat: 53.4808, lng: -2.2426},
@@ -48,7 +67,6 @@ const globalAirports = [
     {c:"Russia", city:"Moscow", code:"SVO", lat: 55.7558, lng: 37.6173}, 
     {c:"Russia", city:"St. Petersburg", code:"LED", lat: 59.9343, lng: 30.3351},
 
-    // AUSTRALIA & NEW ZEALAND
     {c:"Australia", city:"Sydney", code:"SYD", lat: -33.8688, lng: 151.2093}, 
     {c:"Australia", city:"Melbourne", code:"MEL", lat: -37.8136, lng: 144.9631}, 
     {c:"Australia", city:"Brisbane", code:"BNE", lat: -27.4705, lng: 153.0260},
@@ -57,7 +75,6 @@ const globalAirports = [
     {c:"New Zealand", city:"Auckland", code:"AKL", lat: -36.8485, lng: 174.7633}, 
     {c:"New Zealand", city:"Wellington", code:"WLG", lat: -41.2865, lng: 174.7762},
 
-    // ASIA & MIDDLE EAST
     {c:"UAE", city:"Dubai", code:"DXB", lat: 25.276987, lng: 55.296249}, 
     {c:"UAE", city:"Abu Dhabi", code:"AUH", lat: 24.4539, lng: 54.3773},
     {c:"Singapore", city:"Singapore", code:"SIN", lat: 1.3521, lng: 103.8198},
@@ -70,7 +87,6 @@ const globalAirports = [
     {c:"South Korea", city:"Seoul", code:"ICN", lat: 37.5665, lng: 126.9780}, 
     {c:"South Korea", city:"Busan", code:"PUS", lat: 35.1796, lng: 129.0756},
 
-    // SOUTH AMERICA & AFRICA
     {c:"Brazil", city:"Sao Paulo", code:"GRU", lat: -23.5505, lng: -46.6333}, 
     {c:"Brazil", city:"Rio de Janeiro", code:"GIG", lat: -22.9068, lng: -43.1729},
     {c:"South Africa", city:"Johannesburg", code:"JNB", lat: -26.2041, lng: 28.0473}, 
@@ -129,6 +145,19 @@ window.onload = function() {
     countries.forEach(c => { let op = document.createElement('option'); op.value = c; hotelCountryList.appendChild(op); });
     document.getElementById('user-country-input').value = "India";
 };
+
+// --- INTRO TRANSITION ---
+function enterSite() {
+    const overlay = document.getElementById('intro-overlay');
+    overlay.style.opacity = '0';
+    overlay.style.visibility = 'hidden';
+}
+
+// --- HELPER: GET CURRENCY INFO ---
+function getCurrencyInfo() {
+    const country = document.getElementById('user-country-input').value;
+    return currencyData[country] || { code: "USD", symbol: "$", rate: 1 };
+}
 
 function forceDateLimit(input, maxDate) {
     if (!input.value) return;
@@ -223,7 +252,6 @@ function handleSearch(type) {
 
             headerTitle.innerText = "Available Flights";
             if (map) {
-                // USE REAL COORDINATES
                 const oCoord = getCityCoords(originVal);
                 const dCoord = getCityCoords(destVal);
                 
@@ -257,40 +285,37 @@ function handleSearch(type) {
     }, 800);
 }
 
-// --- NEW FUNCTION: GET REAL COORDINATES ---
 function getCityCoords(cityString) {
-    // Extract code (e.g. "Indore (IDR)" -> "IDR")
     const match = cityString.match(/\(([^)]+)\)/);
     const code = match ? match[1] : null;
-    
-    // Look for airport by code
     let cityObj = globalAirports.find(item => item.code === code);
-    
-    // Fallback: Look by city name if code fails
     if (!cityObj) {
         const cleanName = cityString.split('(')[0].trim();
         cityObj = globalAirports.find(item => item.city === cleanName);
     }
-
-    if (cityObj) {
-        return [cityObj.lat, cityObj.lng];
-    } else {
-        // Default Center of India if not found
-        return [20.5937, 78.9629]; 
-    }
+    return cityObj ? [cityObj.lat, cityObj.lng] : [20.5937, 78.9629];
 }
 
+// --- DYNAMIC CURRENCY FLIGHT RENDERING ---
 function renderFlightResults(origin, dest, date, flightClass, tripType, originCountry) {
     const resultsArea = document.getElementById('results-area');
+    const currency = getCurrencyInfo(); // Get Currency
+
     let relevantAirlines = (tripType === 'domestic') ? airlineDatabase.filter(a => a.country === originCountry) : airlineDatabase.filter(a => a.country === originCountry || ["UAE", "UK", "USA", "Germany", "Singapore"].includes(a.country));
     if (relevantAirlines.length === 0) relevantAirlines = [{name: "Global Air", country: "International"}];
 
     document.getElementById('results-count').innerText = `Found 5 options`;
     for(let i=0; i<Math.min(5, relevantAirlines.length); i++) {
         const airline = relevantAirlines[Math.floor(Math.random() * relevantAirlines.length)].name;
-        let basePrice = (tripType === 'domestic') ? 50 + Math.floor(Math.random() * 100) : 450 + Math.floor(Math.random() * 500);
-        if(flightClass === 'Business') basePrice *= 3;
-        if(flightClass === 'First') basePrice *= 5;
+        
+        // Base Price in USD
+        let basePriceUSD = (tripType === 'domestic') ? 50 + Math.floor(Math.random() * 100) : 450 + Math.floor(Math.random() * 500);
+        if(flightClass === 'Business') basePriceUSD *= 3;
+        if(flightClass === 'First') basePriceUSD *= 5;
+
+        // Convert to Local Currency
+        const finalPrice = Math.round(basePriceUSD * currency.rate);
+
         const flightCode = `${airline.substring(0,2).toUpperCase()}-${Math.floor(Math.random()*900)+100}`;
         const plane = Math.random() > 0.5 ? "Boeing 737" : "Airbus A320";
         
@@ -299,21 +324,28 @@ function renderFlightResults(origin, dest, date, flightClass, tripType, originCo
                 <div class="airline-info"><h3>${airline}</h3><p style="color:#6B7280">${flightCode} • ${flightClass}</p></div>
                 <div class="flight-meta"><strong>${origin.split('(')[0]} ➝ ${dest.split('(')[0]}</strong><small>${date}</small></div>
                 <div class="flight-meta"><strong>Non-stop</strong><small>2h 30m</small></div>
-                <div class="price-tag"><h2>$${basePrice}</h2><div class="action-buttons"><button class="detail-btn" onclick="openFlightDetails('${airline}', '${flightCode}', '${plane}')">Details</button><button class="book-btn" onclick="initBooking('${airline}', ${basePrice}, 'flight', '${origin} -> ${dest}')">Book Now</button></div></div>
+                <div class="price-tag"><h2>${currency.symbol}${finalPrice}</h2><div class="action-buttons"><button class="detail-btn" onclick="openFlightDetails('${airline}', '${flightCode}', '${plane}')">Details</button><button class="book-btn" onclick="initBooking('${airline}', ${finalPrice}, 'flight', '${origin} -> ${dest}')">Book Now</button></div></div>
             </div>`;
     }
 }
 
+// --- DYNAMIC CURRENCY HOTEL RENDERING ---
 function renderHotelResults(city, nights) {
     const resultsArea = document.getElementById('results-area');
+    const currency = getCurrencyInfo(); // Get Currency
     document.getElementById('results-count').innerText = `Found 5 hotels`;
     
     for(let i=0; i<5; i++) {
         const hotelName = `${hotelChains[Math.floor(Math.random() * hotelChains.length)]} ${city.split('(')[0]}`;
         const randomRoom = roomTypes[Math.floor(Math.random() * roomTypes.length)]; 
-        const pricePerNight = 80 + Math.floor(Math.random() * 300);
-        const totalPrice = pricePerNight * nights;
         
+        // Base Price in USD
+        const pricePerNightUSD = 80 + Math.floor(Math.random() * 300);
+        const totalPriceUSD = pricePerNightUSD * nights;
+        
+        // Convert
+        const finalPrice = Math.round(totalPriceUSD * currency.rate);
+
         resultsArea.innerHTML += `
             <div class="hotel-card">
                 <div class="hotel-info">
@@ -323,12 +355,12 @@ function renderHotelResults(city, nights) {
                     <span class="rating-badge">⭐ 4.${Math.floor(Math.random()*9)} Excellent</span>
                 </div>
                 <div class="price-tag">
-                    <h2>$${totalPrice}</h2>
+                    <h2>${currency.symbol}${finalPrice}</h2>
                     <small>for ${nights} nights</small>
                 </div>
                 <div class="action-buttons">
                     <button class="detail-btn" onclick="openHotelDetails('${hotelName}', '${randomRoom}')">Details</button>
-                    <button class="book-btn" onclick="initBooking('${hotelName}', ${totalPrice}, 'hotel', '${city}', '${randomRoom}')">Book Room</button>
+                    <button class="book-btn" onclick="initBooking('${hotelName}', ${finalPrice}, 'hotel', '${city}', '${randomRoom}')">Book Room</button>
                 </div>
             </div>`;
     }
@@ -364,12 +396,18 @@ function openHotelDetails(name, roomType) {
 
 function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
 
-// --- BOOKING LOGIC ---
+// --- REFACTORED BOOKING LOGIC ---
 function initBooking(name, price, type, routeInfo, roomType = "") {
     const date = document.getElementById(type === 'flight' ? 'flight-date' : 'hotel-checkin').value;
-    let checkOut = (type === 'hotel') ? document.getElementById('hotel-checkout').value : "";
+    const currency = getCurrencyInfo(); // Get current currency for display in modal
 
-    selectedTrip = { name, price, type, routeInfo, date, checkOut, roomType };
+    let checkOut = "";
+    if (type === 'hotel') {
+        checkOut = document.getElementById('hotel-checkout').value;
+    }
+
+    // Save currency symbol for modal updates
+    selectedTrip = { name, price, type, routeInfo, date, checkOut, roomType, symbol: currency.symbol };
     document.getElementById('modal-trip-name').innerText = name;
     document.getElementById('guest-breakdown-section').innerHTML = ''; 
 
@@ -396,7 +434,7 @@ function setupFlightForms(count, price) {
     document.getElementById('summary-lbl-2').innerText = "Class";
     document.getElementById('modal-trip-class').innerText = "Economy";
     selectedTrip.total = price * count; 
-    document.getElementById('modal-total').innerText = `$${Math.round(selectedTrip.total)}`;
+    document.getElementById('modal-total').innerText = `${selectedTrip.symbol}${Math.round(selectedTrip.total)}`;
     renderPassengerForms(count, "Passenger");
 }
 
@@ -419,6 +457,7 @@ function setupHotelForms(maxGuests) {
         </div>
         <p style="text-align:right; font-size:0.8rem; color:#6B7280; margin-top:-10px; margin-bottom:15px;">Max Allowed Guests: <strong>${maxGuests}</strong></p>
     `;
+    
     handleHotelGuestChange(); 
 }
 
@@ -430,13 +469,16 @@ function handleHotelGuestChange() {
     let children = parseInt(childrenInput.value) || 0;
     
     if (adults + children > selectedTrip.maxGuests) {
-        alert(`Total guests cannot exceed ${selectedTrip.maxGuests}.`);
-        adults = selectedTrip.maxGuests; children = 0;
-        adultsInput.value = adults; childrenInput.value = children;
+        alert(`Total guests cannot exceed ${selectedTrip.maxGuests} (as selected in search).`);
+        adults = selectedTrip.maxGuests;
+        children = 0;
+        adultsInput.value = adults;
+        childrenInput.value = children;
     }
 
     selectedTrip.total = (selectedTrip.unitPrice * adults) + (selectedTrip.unitPrice * 0.5 * children);
-    document.getElementById('modal-total').innerText = `$${Math.round(selectedTrip.total)}`;
+    document.getElementById('modal-total').innerText = `${selectedTrip.symbol}${Math.round(selectedTrip.total)}`;
+
     renderPassengerForms(adults + children, "Guest", adults, children);
 }
 
@@ -444,13 +486,22 @@ function renderPassengerForms(totalCount, labelType, adultCount = 0, childCount 
     const formContainer = document.getElementById('passenger-forms');
     let html = '';
     const userCountry = document.getElementById('user-country-input').value;
-    let adultIdx = 1, childIdx = 1;
+
+    let adultIdx = 1;
+    let childIdx = 1;
 
     if (labelType === "Passenger") {
-        for(let i=1; i<=totalCount; i++) html += generateFormHTML(i, "Passenger", userCountry);
-    } else {
-        for(let i=1; i<=adultCount; i++) html += generateFormHTML(adultIdx++, "Adult", userCountry);
-        for(let i=1; i<=childCount; i++) html += generateFormHTML(childIdx++, "Child", userCountry);
+        for(let i=1; i<=totalCount; i++) {
+            html += generateFormHTML(i, "Passenger", userCountry);
+        }
+    } 
+    else {
+        for(let i=1; i<=adultCount; i++) {
+            html += generateFormHTML(adultIdx++, "Adult", userCountry);
+        }
+        for(let i=1; i<=childCount; i++) {
+            html += generateFormHTML(childIdx++, "Child", userCountry);
+        }
     }
 
     html += `<div class="passenger-item" style="border-left: 4px solid #2563EB;"><h4 class="form-section-title">Security</h4><div class="input-wrapper"><label>Set Booking PIN (4 Digits) *</label><input type="password" id="booking-pin" class="input-field mandatory" maxlength="4" placeholder="1234"></div></div>`;
@@ -459,12 +510,20 @@ function renderPassengerForms(totalCount, labelType, adultCount = 0, childCount 
 
 function generateFormHTML(index, typeLabel, country) {
     const showID = (typeLabel === "Passenger" && index === 1) || (typeLabel === "Adult" && index === 1);
+    
     const idLabel = showID ? "Enter Tripify ID *" : (typeLabel === "Child" ? "" : "ID Number *");
     const idPlaceholder = showID ? "Enter ID sent to email" : "National ID";
     const idId = showID ? `id="p1-id"` : "";
+    
     const color = (typeLabel === "Child") ? "#10B981" : "#E5E7EB"; 
     const ageLimit = (typeLabel === "Child") ? 'max="17"' : 'min="18"';
-    let extraFieldHTML = typeLabel !== "Child" ? `<div class="input-wrapper"><label>${idLabel}</label><input type="text" ${idId} class="input-field mandatory" placeholder="${idPlaceholder}"></div>` : `<div class="input-wrapper"></div>`; 
+
+    let extraFieldHTML = "";
+    if (typeLabel !== "Child") {
+        extraFieldHTML = `<div class="input-wrapper"><label>${idLabel}</label><input type="text" ${idId} class="input-field mandatory" placeholder="${idPlaceholder}"></div>`;
+    } else {
+        extraFieldHTML = `<div class="input-wrapper"></div>`; 
+    }
 
     return `
     <div class="passenger-item" style="border-left: 4px solid ${color};">
@@ -490,8 +549,12 @@ function proceedToPayment() {
     }
 
     const enteredID = document.getElementById('p1-id').value.trim();
-    if (!generatedTripifyID || enteredID !== generatedTripifyID) {
-        alert("Invalid or missing Tripify ID. Please generate or check your ID.");
+    if (!generatedTripifyID) {
+        alert("Please generate a Tripify ID first by clicking 'Send Tripify ID'.");
+        return;
+    }
+    if (enteredID !== generatedTripifyID) {
+        alert("Invalid Tripify ID! Please check the alert popup for the correct code.");
         return;
     }
 
@@ -521,7 +584,10 @@ function generateTicket() {
     let p1Name = "Guest";
     const p1First = document.getElementById('p1-first') || document.getElementById('adult1-first');
     const p1Last = document.getElementById('p1-last') || document.getElementById('adult1-last');
-    if (p1First && p1Last) p1Name = p1First.value + " " + p1Last.value;
+    
+    if (p1First && p1Last) {
+        p1Name = p1First.value + " " + p1Last.value;
+    }
 
     const pin = document.getElementById('booking-pin').value;
     const pnr = "TRIP" + Math.floor(Math.random() * 100000);
@@ -535,8 +601,10 @@ function generateTicket() {
         document.getElementById('ticket-flight-header').classList.remove('hidden');
         document.getElementById('ticket-hotel-header').classList.add('hidden');
         document.getElementById('ticket-date-field').classList.remove('hidden');
+
         document.getElementById('ticket-origin-code').innerText = selectedTrip.routeInfo.split('->')[0].trim().substring(0,3).toUpperCase();
         document.getElementById('ticket-dest-code').innerText = selectedTrip.routeInfo.split('->')[1].trim().substring(0,3).toUpperCase();
+        
         document.getElementById('ticket-lbl-provider').innerText = "Airline";
         document.getElementById('ticket-lbl-class').innerText = "Class";
         document.getElementById('ticket-class-display').innerText = "Economy";
@@ -545,8 +613,10 @@ function generateTicket() {
         document.getElementById('ticket-flight-header').classList.add('hidden');
         document.getElementById('ticket-hotel-header').classList.remove('hidden');
         document.getElementById('ticket-date-field').classList.add('hidden'); 
+
         document.getElementById('ticket-checkin-date').innerText = selectedTrip.date;
         document.getElementById('ticket-checkout-date').innerText = selectedTrip.checkOut;
+
         document.getElementById('ticket-lbl-provider').innerText = "Hotel";
         document.getElementById('ticket-lbl-class').innerText = "Room";
         document.getElementById('ticket-class-display').innerText = selectedTrip.roomType;
@@ -569,8 +639,11 @@ function switchTab(tab) {
     document.getElementById('flight-section').classList.toggle('hidden', tab !== 'flights');
     document.getElementById('hotel-section').classList.toggle('hidden', tab !== 'hotels');
     document.getElementById('main-content').classList.toggle('hidden', tab !== 'flights'); 
+    
+    // Clear results
     document.getElementById('results-area').innerHTML = '';
     document.getElementById('results-count').innerText = '';
+    
     document.getElementById('history-view').classList.add('hidden');
     document.getElementById('main-hero').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -583,9 +656,11 @@ function showHistory() {
     document.getElementById('history-view').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('btn-history').classList.add('active');
+    
     const list = document.getElementById('history-list');
     list.innerHTML = '';
     if(bookingHistory.length === 0) { list.innerHTML = '<p class="text-muted" style="text-align:center;">No bookings found.</p>'; return; }
+    
     bookingHistory.forEach(b => {
         let btn = b.status === 'Confirmed' ? `<button class="btn-danger" onclick="cancelHistoryBooking('${b.pnr}')">Cancel</button>` : `<span class="badge-cancelled">Cancelled</span>`;
         list.innerHTML += `<div class="history-card"><div class="history-details"><h3>${b.title}</h3><p>${b.meta} • ${b.date}</p><small>PNR: ${b.pnr}</small></div><div class="history-actions"><strong>$${b.price}</strong>${btn}</div></div>`;
