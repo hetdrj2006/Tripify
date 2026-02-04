@@ -14,13 +14,11 @@ let generatedTripifyID = null;
 let loggedInUser = null; 
 let currentAuthMode = 'signin';
 let simulatedOTP = "123456";
-let forgotPasswordEmail = ""; // To store email during reset flow
+let forgotPasswordEmail = ""; 
 
 window.onload = function() {
     const savedUser = localStorage.getItem('tripify_user');
     if (savedUser) loginSuccess(JSON.parse(savedUser), false);
-    const savedHistory = localStorage.getItem('tripify_history');
-    if (savedHistory) bookingHistory = JSON.parse(savedHistory);
 
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
@@ -50,7 +48,7 @@ function openAuthModal() {
     } else {
         document.getElementById('auth-modal').classList.remove('hidden');
         document.getElementById('auth-step-1').classList.remove('hidden');
-        document.getElementById('auth-step-forgot').classList.add('hidden'); // Reset to default
+        document.getElementById('auth-step-forgot').classList.add('hidden'); 
     }
 }
 
@@ -127,7 +125,8 @@ function verifyOTP() {
         
         if (currentAuthMode === 'register') {
             const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
-            const newUser = { name: nameInput || emailInput.split('@')[0], email: emailInput, password: passwordInput };
+            // Init history array
+            const newUser = { name: nameInput || emailInput.split('@')[0], email: emailInput, password: passwordInput, history: [] };
             usersDB.push(newUser);
             localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
             loginSuccess(newUser, true);
@@ -149,7 +148,7 @@ function initForgotFlow() {
     document.getElementById('btn-forgot-action').innerText = "Send OTP";
     document.getElementById('btn-forgot-action').setAttribute('onclick', 'handleForgotOTP()');
     document.getElementById('btn-forgot-action').classList.remove('hidden');
-    document.getElementById('btn-reset-confirm').classList.add('hidden'); // Ensure button hidden
+    document.getElementById('btn-reset-confirm').classList.add('hidden'); 
 }
 
 function handleForgotOTP() {
@@ -167,7 +166,6 @@ function handleForgotOTP() {
     forgotPasswordEmail = email;
     simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
     
-    // Simulate Sending
     const btn = document.getElementById('btn-forgot-action');
     btn.innerText = "Sending...";
     btn.disabled = true;
@@ -184,17 +182,10 @@ function handleForgotOTP() {
 function verifyForgotOTP() {
     const entered = document.getElementById('forgot-otp').value;
     if(entered === simulatedOTP) {
-        const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
-        const user = usersDB.find(u => u.email === forgotPasswordEmail);
-        
-        // 1. Reveal Old Password
-        alert(`Authentication Successful.\n\nYour Current Password is: ${user.password}\n\nYou can now set a new password below.`);
-        
-        // 2. Transition UI to "Reset Password"
         document.getElementById('forgot-otp-section').classList.add('hidden');
-        document.getElementById('btn-forgot-action').classList.add('hidden'); // Hide verify button
-        document.getElementById('forgot-reset-section').classList.remove('hidden'); // Show input
-        document.getElementById('btn-reset-confirm').classList.remove('hidden'); // Show CONFIRM button
+        document.getElementById('btn-forgot-action').classList.add('hidden'); 
+        document.getElementById('forgot-reset-section').classList.remove('hidden'); 
+        document.getElementById('btn-reset-confirm').classList.remove('hidden'); 
     } else {
         alert("Incorrect OTP.");
     }
@@ -208,11 +199,8 @@ function confirmPasswordReset() {
     const userIndex = usersDB.findIndex(u => u.email === forgotPasswordEmail);
 
     if(userIndex !== -1) {
-        // Update DB
         usersDB[userIndex].password = newPass;
         localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
-        
-        // Auto Login
         loginSuccess(usersDB[userIndex], true);
         alert("Password updated successfully!");
         closeAuthModal();
@@ -227,7 +215,11 @@ function loginSuccess(user, save) {
     const btn = document.getElementById('nav-user-btn');
     btn.innerText = `👤 ${user.name}`;
     btn.classList.add('logged-in');
-    if(!document.getElementById('history-view').classList.contains('hidden')) showHistory();
+    
+    // Refresh history view if visible
+    if(!document.getElementById('history-view').classList.contains('hidden')) {
+        showHistory();
+    }
 }
 
 function logout() {
@@ -450,6 +442,12 @@ function openHotelDetails(name, roomType) {
 function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
 
 function initBooking(name, price, type, routeInfo, roomType = "") {
+    if(!loggedInUser) {
+        alert("Please Sign In to book a trip.");
+        openAuthModal();
+        return;
+    }
+
     const date = document.getElementById(type === 'flight' ? 'flight-date' : 'hotel-checkin').value;
     const currency = getCurrencyInfo();
     let checkOut = (type === 'hotel') ? document.getElementById('hotel-checkout').value : "";
@@ -467,10 +465,16 @@ function initBooking(name, price, type, routeInfo, roomType = "") {
         setupHotelForms(searchGuests);
     }
 
+    // RESET PAYMENT UI
     document.getElementById('booking-step-1').classList.remove('hidden');
     document.getElementById('booking-step-payment').classList.add('hidden');
     document.getElementById('booking-step-3').classList.add('hidden');
     document.getElementById('modal-footer-action').classList.remove('hidden');
+    
+    // Ensure Proceed button is visible and Confirm is hidden initially
+    document.getElementById('btn-proceed').classList.remove('hidden');
+    document.getElementById('btn-pay-confirm').classList.add('hidden');
+
     document.getElementById('booking-modal').classList.remove('hidden');
     generatedTripifyID = null; 
 }
@@ -552,17 +556,24 @@ function proceedToPayment() {
     if (phoneInput && phoneInput.value.length !== 10) { alert("Mobile number must be exactly 10 digits."); phoneInput.style.borderColor = 'red'; return; }
     const enteredID = document.getElementById('p1-id').value.trim();
     if (!generatedTripifyID || enteredID !== generatedTripifyID) { alert("Invalid or missing Tripify ID."); return; }
+    
+    // SWITCH TO PAYMENT UI
     document.getElementById('booking-step-1').classList.add('hidden');
     document.getElementById('booking-step-payment').classList.remove('hidden');
+    
+    // HIDE PROCEED, SHOW CONFIRM
+    document.getElementById('btn-proceed').classList.add('hidden');
+    document.getElementById('btn-pay-confirm').classList.remove('hidden');
 }
 
 function selectPayment(el, method) {
     document.querySelectorAll('.payment-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected'); selectedPaymentMethod = method;
-    document.getElementById('btn-pay-confirm').classList.remove('hidden');
 }
 
 function confirmPayment() {
+    if(!selectedPaymentMethod) return alert("Please select a payment method.");
+    
     document.getElementById('payment-loader').classList.remove('hidden');
     document.querySelector('.payment-options').classList.add('hidden');
     document.getElementById('btn-pay-confirm').classList.add('hidden');
@@ -577,10 +588,25 @@ function generateTicket() {
     const pin = document.getElementById('booking-pin').value;
     const pnr = "TRIP" + Math.floor(Math.random() * 100000);
 
-    // PERSIST BOOKING
-    const newBooking = { pnr, pin, title: selectedTrip.name, meta: selectedTrip.type === 'flight' ? selectedTrip.routeInfo : "Hotel Stay", date: selectedTrip.date, price: selectedTrip.total, status: "Confirmed" };
-    bookingHistory.push(newBooking);
-    localStorage.setItem('tripify_history', JSON.stringify(bookingHistory));
+    // PERSIST BOOKING (USER SPECIFIC)
+    if(loggedInUser) {
+        const newBooking = { pnr, pin, title: selectedTrip.name, meta: selectedTrip.type === 'flight' ? selectedTrip.routeInfo : "Hotel Stay", date: selectedTrip.date, price: selectedTrip.total, status: "Confirmed" };
+        
+        // Update User Object in Memory
+        if(!loggedInUser.history) loggedInUser.history = [];
+        loggedInUser.history.push(newBooking);
+        
+        // Update User Object in DB
+        const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
+        const dbIdx = usersDB.findIndex(u => u.email === loggedInUser.email);
+        if(dbIdx !== -1) {
+            usersDB[dbIdx].history = loggedInUser.history;
+            localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
+        }
+        
+        // Save current session
+        localStorage.setItem('tripify_user', JSON.stringify(loggedInUser));
+    }
 
     document.getElementById('ticket-passenger').innerText = p1Name;
     document.getElementById('ticket-pnr').innerText = pnr;
@@ -614,26 +640,41 @@ function switchTab(tab) {
 }
 
 function showHistory() {
+    // SECURITY CHECK
+    if(!loggedInUser) {
+        alert("Please login to view your history.");
+        openAuthModal();
+        return;
+    }
+
     document.getElementById('main-hero').classList.add('hidden'); document.getElementById('main-content').classList.add('hidden'); document.getElementById('history-view').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('btn-history').classList.add('active');
     const list = document.getElementById('history-list'); list.innerHTML = '';
     
-    // REFRESH FROM STORAGE
-    const stored = localStorage.getItem('tripify_history');
-    if(stored) bookingHistory = JSON.parse(stored);
+    // LOAD USER SPECIFIC HISTORY
+    const history = loggedInUser.history || [];
 
-    if(bookingHistory.length === 0) { list.innerHTML = '<p class="text-muted" style="text-align:center;">No bookings found.</p>'; return; }
-    bookingHistory.forEach(b => {
+    if(history.length === 0) { list.innerHTML = '<p class="text-muted" style="text-align:center;">No bookings found.</p>'; return; }
+    history.forEach(b => {
         let btn = b.status === 'Confirmed' ? `<button class="btn-danger" onclick="cancelHistoryBooking('${b.pnr}')">Cancel</button>` : `<span class="badge-cancelled">Cancelled</span>`;
-        list.innerHTML += `<div class="history-card"><div class="history-details"><h3>${b.title}</h3><p>${b.meta} • ${b.date}</p><small>PNR: ${b.pnr}</small></div><div class="history-actions"><strong>$${b.price}</strong>${btn}</div></div>`;
+        list.innerHTML += `<div class="history-card"><div class="history-details"><h3>${b.title}</h3><p>${b.meta} • ${b.date}</p><small>PNR: ${b.pnr}</small></div><div class="history-actions"><strong>${b.price}</strong>${btn}</div></div>`;
     });
 }
 
 function cancelHistoryBooking(pnr) {
-    const b = bookingHistory.find(x => x.pnr === pnr);
+    const history = loggedInUser.history;
+    const b = history.find(x => x.pnr === pnr);
+    
     if(b && prompt(`Enter PIN for ${pnr}:`) === b.pin) { 
         b.status = 'Cancelled'; 
-        localStorage.setItem('tripify_history', JSON.stringify(bookingHistory)); // UPDATE STORAGE
+        
+        // SYNC DB
+        const usersDB = JSON.parse(localStorage.getItem('tripify_users_db'));
+        const idx = usersDB.findIndex(u => u.email === loggedInUser.email);
+        usersDB[idx].history = history;
+        localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
+        localStorage.setItem('tripify_user', JSON.stringify(loggedInUser));
+        
         showHistory(); 
         alert("Booking Cancelled."); 
     } else { alert("Incorrect PIN"); }
