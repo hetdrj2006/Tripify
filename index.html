@@ -13,9 +13,11 @@
     <div id="intro-overlay">
         <div class="intro-content">
             <h1 class="intro-logo">Tripify.</h1>
-            <p class="intro-tagline">
-                <span class="typewriter-text part-1">Move the World, Your Way!</span><br>
-            </p>
+            <div class="intro-tagline-wrapper">
+                <p class="intro-tagline">
+                    <span class="typewriter-text part-1">Move the World, Your Way</span><br>
+                </p>
+            </div>
             <button class="btn-enter" onclick="enterSite()">Enter Site</button>
         </div>
     </div>
@@ -29,7 +31,7 @@
             <button id="btn-flights" class="nav-btn active" onclick="switchTab('flights')">Flights</button>
             <button id="btn-hotels" class="nav-btn" onclick="switchTab('hotels')">Hotels</button>
             <button id="btn-history" class="nav-btn" onclick="showHistory()">My Bookings</button>
-            <a href="#" class="btn-login">Sign In</a>
+            <button id="nav-user-btn" class="btn-login" onclick="openAuthModal()">Sign In</button>
         </div>
     </nav>
 
@@ -153,6 +155,100 @@
         </div>
     </div>
 
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-content small-modal auth-container">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            
+            <div id="auth-step-1">
+                <div class="auth-tabs">
+                    <button id="tab-signin" class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                    <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+                </div>
+
+                <div class="auth-body">
+                    <h2 id="auth-title" style="margin-bottom: 1rem; text-align: center;">Welcome Back</h2>
+                    
+                    <div id="register-fields" class="hidden">
+                        <div class="input-wrapper">
+                            <label>Full Name</label>
+                            <input type="text" id="auth-name" class="input-field" placeholder="John Doe">
+                        </div>
+                    </div>
+
+                    <div class="input-wrapper" style="margin-top: 1rem;">
+                        <label>Email Address</label>
+                        <input type="email" id="auth-email" class="input-field" placeholder="name@example.com">
+                    </div>
+
+                    <div class="input-wrapper" style="margin-top: 1rem;">
+                        <label>Password</label>
+                        <input type="password" id="auth-password" class="input-field" placeholder="••••••••">
+                    </div>
+
+                    <div id="forgot-link-container" class="text-right" style="margin-top: 0.5rem;">
+                        <a href="#" class="text-link" onclick="initForgotFlow()">Forgot Password?</a>
+                    </div>
+
+                    <button class="btn-google" onclick="initGoogleAuth()">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+                        <span>Continue with Google</span>
+                    </button>
+
+                    <button class="btn-primary full-width-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Continue</button>
+                </div>
+            </div>
+
+            <div id="auth-step-otp" class="hidden">
+                <div style="text-align: center; padding: 2rem;">
+                    <h3>Verify it's you</h3>
+                    <p class="text-muted" style="margin-bottom: 1.5rem;">We've sent a code to <br><strong id="otp-email-display">email</strong></p>
+                    
+                    <div class="input-wrapper">
+                        <input type="text" id="auth-otp" class="input-field" placeholder="Enter 6-digit OTP" style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;">
+                    </div>
+
+                    <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="verifyOTP()">Verify & Sign In</button>
+                    <button class="nav-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Resend Code</button>
+                </div>
+            </div>
+
+            <div id="auth-step-forgot" class="hidden">
+                <div style="padding: 2rem;">
+                    <h3 id="forgot-title" style="text-align: center; margin-bottom: 1rem;">Recover Password</h3>
+                    <p id="forgot-desc" class="text-muted" style="text-align: center; margin-bottom: 1.5rem;">Enter your registered email to receive an OTP.</p>
+                    
+                    <div id="forgot-email-section">
+                        <div class="input-wrapper">
+                            <label>Email Address</label>
+                            <input type="email" id="forgot-email" class="input-field" placeholder="name@example.com">
+                        </div>
+                    </div>
+
+                    <div id="forgot-otp-section" class="hidden" style="margin-top: 1.5rem;">
+                        <div class="input-wrapper">
+                            <label>Enter OTP</label>
+                            <input type="text" id="forgot-otp" class="input-field" placeholder="6-digit OTP" style="text-align: center; letter-spacing: 3px;">
+                        </div>
+                    </div>
+
+                    <div id="forgot-reset-section" class="hidden" style="margin-top: 1.5rem;">
+                        <div class="input-wrapper">
+                            <label>Set New Password</label>
+                            <input type="password" id="forgot-new-password" class="input-field" placeholder="New Password">
+                        </div>
+                    </div>
+
+                    <button id="btn-forgot-action" class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="handleForgotOTP()">Send OTP</button>
+                    
+                    <button id="btn-reset-confirm" class="btn-primary full-width-btn hidden" style="margin-top: 1.5rem;" onclick="confirmPasswordReset()">Update Password</button>
+
+                    <button class="nav-btn full-width-btn" style="margin-top: 0.5rem;" onclick="closeAuthModal()">Cancel</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <div id="booking-modal" class="modal-overlay hidden">
         <div class="modal-content wide-modal">
             <button class="close-btn" onclick="closeModal()">&times;</button>
@@ -166,7 +262,6 @@
             </div>
 
             <div id="booking-scroll-container" class="form-scroll-area">
-                
                 <div id="booking-step-1">
                     <h4 class="form-section-title">Primary Contact</h4>
                     <div class="grid-2">
@@ -192,9 +287,7 @@
                         </div>
                     </div>
                     <hr class="divider">
-                    
                     <div id="guest-breakdown-section"></div>
-
                     <div id="passenger-forms"></div>
                 </div>
 
@@ -231,46 +324,23 @@
                             <span id="ticket-status" class="status-confirmed">CONFIRMED</span>
                         </div>
                         <div class="ticket-main">
-                            
                             <div id="ticket-flight-header" class="ticket-route">
                                 <h2 id="ticket-origin-code">ORG</h2>
                                 <span class="plane-icon">✈</span>
                                 <h2 id="ticket-dest-code">DES</h2>
                             </div>
-
                             <div id="ticket-hotel-header" class="ticket-hotel-header hidden">
                                 <div class="hotel-dates-row">
-                                    <div class="date-group">
-                                        <span class="sub-label">CHECK-IN</span>
-                                        <h3 id="ticket-checkin-date">2023-10-01</h3>
-                                    </div>
-                                    <div class="stay-icon">
-                                        <span>🌙</span>
-                                    </div>
-                                    <div class="date-group">
-                                        <span class="sub-label">CHECK-OUT</span>
-                                        <h3 id="ticket-checkout-date">2023-10-05</h3>
-                                    </div>
+                                    <div class="date-group"><span class="sub-label">CHECK-IN</span><h3 id="ticket-checkin-date">2023-10-01</h3></div>
+                                    <div class="stay-icon"><span>🌙</span></div>
+                                    <div class="date-group"><span class="sub-label">CHECK-OUT</span><h3 id="ticket-checkout-date">2023-10-05</h3></div>
                                 </div>
                             </div>
-
                             <div class="ticket-info-grid">
-                                <div class="ticket-field">
-                                    <small id="ticket-lbl-pax">Passenger</small> 
-                                    <strong id="ticket-passenger">Name</strong>
-                                </div>
-                                <div class="ticket-field">
-                                    <small id="ticket-lbl-provider">Airline</small> 
-                                    <strong id="ticket-airline">Provider</strong>
-                                </div>
-                                <div class="ticket-field" id="ticket-date-field">
-                                    <small>Date</small> 
-                                    <strong id="ticket-date">Date</strong>
-                                </div>
-                                <div class="ticket-field">
-                                    <small id="ticket-lbl-class">Class</small> 
-                                    <strong id="ticket-class-display">Eco</strong>
-                                </div>
+                                <div class="ticket-field"><small id="ticket-lbl-pax">Passenger</small> <strong id="ticket-passenger">Name</strong></div>
+                                <div class="ticket-field"><small id="ticket-lbl-provider">Airline</small> <strong id="ticket-airline">Provider</strong></div>
+                                <div class="ticket-field" id="ticket-date-field"><small>Date</small> <strong id="ticket-date">Date</strong></div>
+                                <div class="ticket-field"><small id="ticket-lbl-class">Class</small> <strong id="ticket-class-display">Eco</strong></div>
                             </div>
                             <div class="ticket-footer"><small>Booking Ref:</small> <strong id="ticket-pnr">123</strong></div>
                         </div>
