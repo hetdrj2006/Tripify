@@ -70,7 +70,6 @@ function updateReturnMinDate() {
     
     if (depInput.value) {
         retInput.setAttribute('min', depInput.value);
-        // Do not clear/reset here to allow typing freedom
     }
 }
 
@@ -530,6 +529,15 @@ function handleSearch(type) {
         const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
         if (diffDays <= 0) { showToast("Checkout must be after Check-in.", "error"); return; }
         if (diffDays > 60) { showToast("Maximum stay is 60 days.", "error"); return; }
+        
+        const checkinTime = document.getElementById('hotel-checkin-time').value;
+        const checkoutTime = document.getElementById('hotel-checkout-time').value;
+        const rooms = document.getElementById('hotel-rooms').value;
+        const beds = document.getElementById('hotel-beds').value;
+        const floor = document.getElementById('hotel-floor').value;
+
+        headerTitle.innerText = `Hotels in ${city}`;
+        renderHotelResults(city, diffDays, checkinTime, checkoutTime, rooms, beds, floor);
     }
 
     resultsArea.innerHTML = ''; 
@@ -566,7 +574,8 @@ function handleSearch(type) {
             const flightClass = document.getElementById('flight-class').value;
             const tripType = document.querySelector('input[name="regionType"]:checked').value; 
             const originCountry = document.getElementById('user-country-input').value;
- 
+            const timeSlot = document.getElementById('flight-timeslot').value;
+
             headerTitle.innerText = "Available Flights";
             if (map) {
                 const oCoord = getCityCoords(originVal);
@@ -577,16 +586,7 @@ function handleSearch(type) {
                 mapRoute = L.polyline([oCoord, dCoord], {color: '#2563EB', weight: 4}).addTo(map);
                 map.fitBounds(mapRoute.getBounds(), {padding: [50, 50]});
             }
-            renderFlightResults(originVal, destVal, date, flightClass, tripType, originCountry);
- 
-        } else if (type === 'hotel') {
-            const city = document.getElementById('hotel-city').value;
-            const checkin = document.getElementById('hotel-checkin').value;
-            const checkout = document.getElementById('hotel-checkout').value;
-            const d1 = new Date(checkin); const d2 = new Date(checkout);
-            const diffDays = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-            headerTitle.innerText = `Hotels in ${city}`;
-            renderHotelResults(city, diffDays);
+            renderFlightResults(originVal, destVal, date, flightClass, tripType, originCountry, timeSlot);
         }
     }, 800);
 }
@@ -628,10 +628,11 @@ function clearFilters(apply = true) {
     document.getElementById('price-val').innerText = 'Any';
     document.getElementById('filter-airline').value = 'all';
     document.getElementById('filter-rating').value = '0';
+    document.getElementById('filter-timing').value = 'all'; // Reset timing
     if(apply && currentMockData.length > 0) applyFilters();
 }
 
-function renderFlightResults(origin, dest, date, flightClass, tripType, originCountry) {
+function renderFlightResults(origin, dest, date, flightClass, tripType, originCountry, timeSlot) {
     const currency = getCurrencyInfo();
     const isRoundTrip = document.querySelector('input[name="tripType"]:checked').value === 'roundtrip';
     
@@ -653,10 +654,21 @@ function renderFlightResults(origin, dest, date, flightClass, tripType, originCo
         if(flightClass === 'Business') basePriceUSD *= 3; if(flightClass === 'First') basePriceUSD *= 5;
         if (isRoundTrip) basePriceUSD *= 1.8;
 
+        // TIME GENERATION
+        let hour;
+        if (timeSlot === 'morning') hour = 6 + Math.floor(Math.random() * 5); // 6-11
+        else if (timeSlot === 'afternoon') hour = 12 + Math.floor(Math.random() * 5); // 12-17
+        else if (timeSlot === 'evening') hour = 18 + Math.floor(Math.random() * 5); // 18-23
+        else if (timeSlot === 'night') hour = 0 + Math.floor(Math.random() * 5); // 0-5
+        else hour = Math.floor(Math.random() * 23); // Any
+        
+        const min = Math.floor(Math.random() * 11) * 5; // 00, 05, 10...
+        const timeString = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+
         const finalPrice = Math.round(basePriceUSD * currency.rate);
         
         currentMockData.push({
-            id: mockDataId++, // KEY FIX: Assign unique ID
+            id: mockDataId++, 
             type: 'flight',
             airline: airline,
             flightCode: `${airline.substring(0,2).toUpperCase()}-${Math.floor(Math.random()*900)+100}`,
@@ -664,6 +676,8 @@ function renderFlightResults(origin, dest, date, flightClass, tripType, originCo
             origin: origin,
             dest: dest,
             date: date,
+            time: timeString, // New Time Property
+            hour: hour, // For filtering
             class: flightClass,
             price: finalPrice,
             currencySym: currency.symbol,
@@ -675,18 +689,29 @@ function renderFlightResults(origin, dest, date, flightClass, tripType, originCo
     applyFilters();
 }
  
-function renderHotelResults(city, nights) {
+function renderHotelResults(city, nights, checkInT, checkOutT, rooms, beds, floor) {
     const currency = getCurrencyInfo();
     for(let i=0; i<8; i++) {
         const hotelName = `${hotelChains[Math.floor(Math.random() * hotelChains.length)]} ${city.split('(')[0]}`;
         const randomRoom = roomTypes[Math.floor(Math.random() * roomTypes.length)]; 
         const rating = (3.5 + Math.random() * 1.5).toFixed(1); 
-        const pricePerNightUSD = 80 + Math.floor(Math.random() * 300);
-        const totalPriceUSD = pricePerNightUSD * nights;
+        
+        // Base Price logic
+        let basePriceUSD = 80 + Math.floor(Math.random() * 300);
+        
+        // Add Room/Bed costs
+        const roomMultiplier = parseInt(rooms); 
+        const bedCost = (parseInt(beds) - 1) * 20; // Extra bed costs $20
+        
+        basePriceUSD = (basePriceUSD + bedCost) * roomMultiplier;
+        
+        if (floor === 'High') basePriceUSD += 50; 
+
+        const totalPriceUSD = basePriceUSD * nights;
         const finalPrice = Math.round(totalPriceUSD * currency.rate);
 
         currentMockData.push({
-            id: mockDataId++, // KEY FIX: Assign unique ID
+            id: mockDataId++, 
             type: 'hotel',
             name: hotelName,
             room: randomRoom,
@@ -694,7 +719,13 @@ function renderHotelResults(city, nights) {
             nights: nights,
             price: finalPrice,
             currencySym: currency.symbol,
-            city: city
+            city: city,
+            // Capture specific hotel details
+            checkInTime: checkInT,
+            checkOutTime: checkOutT,
+            roomCount: rooms,
+            bedCount: beds,
+            floorPref: floor
         });
     }
     applyFilters();
@@ -706,6 +737,7 @@ function applyFilters() {
     
     const sliderVal = parseInt(document.getElementById('price-range').value); 
     const sortVal = document.getElementById('sort-results').value;
+    const timeFilter = document.getElementById('filter-timing').value; // NEW FILTER
 
     let filtered = currentMockData.filter(item => {
         if (item.price > sliderVal * (item.currencySym === '₹' ? 50 : 1)) return false; 
@@ -713,7 +745,17 @@ function applyFilters() {
         if (currentSearchType === 'flight') {
             const airlineFilter = document.getElementById('filter-airline').value;
             if (airlineFilter !== 'all' && item.airline !== airlineFilter) return false;
+            
+            // TIMING LOGIC
+            if (timeFilter !== 'all') {
+                const h = item.hour;
+                if (timeFilter === 'morning' && (h < 6 || h >= 12)) return false;
+                if (timeFilter === 'afternoon' && (h < 12 || h >= 18)) return false;
+                if (timeFilter === 'evening' && (h < 18 || h >= 24)) return false;
+                if (timeFilter === 'night' && (h >= 6)) return false;
+            }
         }
+        
         if (currentSearchType === 'hotel') {
             const ratingFilter = parseFloat(document.getElementById('filter-rating').value);
             if (parseFloat(item.rating) < ratingFilter) return false;
@@ -734,6 +776,7 @@ function applyFilters() {
 
     filtered.forEach(item => {
         if (item.type === 'flight') {
+            const routeStr = `${item.origin} -> ${item.dest}`;
             const badge = item.isRoundTrip ? `<span class="badge-eco" style="background:#DBEAFE; color:#1E40AF; margin-left:10px;">Round Trip</span>` : '';
             
             resultsArea.innerHTML += `
@@ -745,7 +788,7 @@ function applyFilters() {
                 
                 <div class="flight-meta">
                     <div style="font-size:1.1rem; font-weight:700;">${item.origin.split('(')[0]} ➝ ${item.dest.split('(')[0]}</div>
-                    <div style="color:var(--text-muted); font-size:0.9rem;">${item.date}</div>
+                    <div style="color:var(--text-muted); font-size:0.9rem;">${item.date} at ${item.time}</div>
                     ${badge}
                 </div>
                 
@@ -763,12 +806,13 @@ function applyFilters() {
                 </div>
             </div>`;
         } else {
+            // Updated Hotel Card to show beds/floor/rooms
             resultsArea.innerHTML += `
             <div class="hotel-card">
                 <div class="hotel-info">
                     <h3>${item.name}</h3>
                     <p style="color:var(--primary); font-weight:600;">${item.room}</p>
-                    <p>City Center • 2.5km from airport</p>
+                    <p>${item.roomCount} Rooms • ${item.bedCount} Bed(s)/Room • ${item.floorPref} Floor</p>
                     <span class="rating-badge">⭐ ${item.rating} Excellent</span>
                 </div>
                 <div class="price-tag"><h2>${item.currencySym}${item.price}</h2><small>for ${item.nights} nights</small></div>
@@ -815,7 +859,6 @@ function initBooking(arg1) {
        return;
     }
 
-    // KEY FIX: Lookup item by ID
     let item = null;
     if(typeof arg1 === 'number') {
         item = currentMockData.find(x => x.id === arg1);
@@ -826,19 +869,20 @@ function initBooking(arg1) {
     const currency = getCurrencyInfo();
     let name, price, type, routeInfo, roomType = "", date, checkOut = "";
 
+    // Capture generic and specific props
     if(item.type === 'flight') {
         name = item.airline;
         price = item.price;
         type = 'flight';
         routeInfo = `${item.origin} -> ${item.dest}`;
-        date = item.date;
+        date = item.date; // Contains specific date
     } else {
         name = item.name;
         price = item.price;
         type = 'hotel';
         routeInfo = item.city;
         roomType = item.room;
-        date = document.getElementById('hotel-checkin').value; // fallback
+        date = document.getElementById('hotel-checkin').value; 
         checkOut = document.getElementById('hotel-checkout').value;
     }
     
@@ -848,22 +892,20 @@ function initBooking(arg1) {
         passengerName: loggedInUser.name,
         originalPrice: price,
         discountApplied: 0,
-        coinsRedeemed: 0
+        coinsRedeemed: 0,
+        // Save specific preferences to trip object
+        metaDetails: item.type === 'hotel' ? `${item.roomCount} Rooms, ${item.bedCount} Beds, ${item.floorPref} Floor` : `Time: ${item.time}`
     };
     
     document.getElementById('modal-trip-name').innerText = name;
     document.getElementById('guest-breakdown-section').innerHTML = ''; 
-    document.getElementById('loyalty-redeem-block').classList.add('hidden'); // Reset
+    document.getElementById('loyalty-redeem-block').classList.add('hidden'); 
 
-    // CHECK COINS
     if(loggedInUser.coins > 0) {
         document.getElementById('loyalty-redeem-block').classList.remove('hidden');
         document.getElementById('coin-balance-display').innerText = `Bal: ${loggedInUser.coins}`;
-        
-        // DYNAMIC COIN VALUE IN CURRENCY
         const coinVal = getCoinValue();
         const discountValue = (loggedInUser.coins * coinVal).toFixed(2);
-        
         document.getElementById('redeemable-coins').innerText = loggedInUser.coins; 
         document.getElementById('coin-save-amount').innerText = `${currency.symbol}${discountValue}`;
         document.getElementById('use-coins-check').checked = false;
@@ -1042,11 +1084,9 @@ function applyPromoCode() {
 function toggleCoinRedemption() {
     const checkBox = document.getElementById('use-coins-check');
     if (checkBox.checked) {
-        // Calculate dynamic coin value
         const coinVal = getCoinValue();
         const discount = loggedInUser.coins * coinVal;
-        
-        selectedTrip.coinsRedeemed = discount; // This is currency amount, not just coin count
+        selectedTrip.coinsRedeemed = discount; 
         showToast("Coins Applied!", "success");
     } else {
         selectedTrip.coinsRedeemed = 0;
@@ -1089,15 +1129,11 @@ function generateTicket() {
  
     if(loggedInUser) {
         const earnedCoins = Math.floor(selectedTrip.total * 0.05);
-        
-        // If coins were used, deduct them. Since coinsRedeemed is currency value, reverse calc:
         let coinsUsedCount = 0;
         if(selectedTrip.coinsRedeemed > 0) {
-             coinsUsedCount = loggedInUser.coins; // We used ALL coins in toggle logic
+             coinsUsedCount = loggedInUser.coins; 
         }
-        
         loggedInUser.coins = (loggedInUser.coins - coinsUsedCount) + earnedCoins;
-        
         document.getElementById('reward-earned-msg').innerText = `🪙 You earned ${earnedCoins} Tripify Coins!`;
 
         const newBooking = { 
@@ -1111,7 +1147,9 @@ function generateTicket() {
             symbol: selectedTrip.symbol,
             passengerName: selectedTrip.passengerName,
             type: selectedTrip.type,
-            roomType: selectedTrip.roomType
+            roomType: selectedTrip.roomType,
+            // Save meta details
+            extraDetails: selectedTrip.metaDetails
         };
         
         if(!loggedInUser.history) loggedInUser.history = [];
@@ -1152,26 +1190,78 @@ function switchTab(tab) {
     document.getElementById('history-view').classList.add('hidden'); document.getElementById('main-hero').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('btn-' + tab).classList.add('active');
 }
+
+// DATE LOGIC FOR PAST TRIPS
+function isPastDate(dateString) {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const today = new Date();
+    // Compare dates (set time to 0 to compare only days)
+    return date.setHours(0,0,0,0) < today.setHours(0,0,0,0);
+}
  
 function showHistory() {
     if(!loggedInUser) { showToast("Please login to view your history.", "error"); openAuthModal(); return; }
     document.getElementById('main-hero').classList.add('hidden'); document.getElementById('main-content').classList.add('hidden'); document.getElementById('history-view').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active')); document.getElementById('btn-history').classList.add('active');
     const list = document.getElementById('history-list'); list.innerHTML = '';
+    
     let cleanHistory = loggedInUser.history.filter(b => b.meta && b.meta !== 'undefined' && b.meta !== 'Route info unavailable');
     if(cleanHistory.length !== loggedInUser.history.length) { loggedInUser.history = cleanHistory; updateUserInDB(); }
     if(cleanHistory.length === 0) { list.innerHTML = '<p class="text-muted" style="text-align:center;">No bookings found.</p>'; return; }
+    
     cleanHistory.forEach(b => {
         let actionBtns = '';
-        if(b.status === 'Confirmed') {
+        
+        // CHECK IF PAST
+        const relevantDate = (b.type === 'hotel' && b.checkOut) ? b.checkOut : b.date;
+        const isCompleted = isPastDate(relevantDate) && b.status === 'Confirmed';
+        
+        if (isCompleted) {
+            // PAST: Download & Delete
+            actionBtns = `
+                <span class="badge-completed" style="margin-right:10px;">Completed</span>
+                <button class="btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-right:5px;" onclick="downloadTicket()">Download</button>
+                <button class="btn-danger" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="initDeleteBooking('${b.pnr}')">Delete</button>
+            `;
+        } else if(b.status === 'Confirmed') {
+            // FUTURE: View & Cancel
             actionBtns = `<button class="btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-right:5px;" onclick="viewHistoryTicket('${b.pnr}')">View Ticket</button><button class="btn-danger" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="cancelHistoryBooking('${b.pnr}')">Cancel</button>`;
         } else {
+            // CANCELLED: Delete
             actionBtns = `<span class="badge-cancelled" style="margin-right:10px;">Cancelled</span><button class="btn-danger" style="padding:0.4rem 0.8rem; font-size:0.8rem; background:#EF4444;" onclick="deleteHistoryItem('${b.pnr}')">Delete</button>`;
         }
+        
         const displayMeta = (b.meta && b.meta !== 'undefined') ? b.meta : 'Details unavailable';
         const displayPrice = (b.symbol ? b.symbol : '') + b.price;
-        list.innerHTML += `<div class="history-card"><div class="history-details"><h3>${b.title}</h3><p>${displayMeta} • ${b.date}</p><small>PNR: ${b.pnr}</small></div><div class="history-actions" style="flex-direction:column; align-items:flex-end; gap:0.5rem;"><strong>${displayPrice}</strong><div style="display:flex;">${actionBtns}</div></div></div>`;
+        const extras = b.extraDetails ? `<br><small style="color:#6B7280">${b.extraDetails}</small>` : '';
+        
+        list.innerHTML += `<div class="history-card"><div class="history-details"><h3>${b.title}</h3><p>${displayMeta} • ${b.date}${extras}</p><small>PNR: ${b.pnr}</small></div><div class="history-actions" style="flex-direction:column; align-items:flex-end; gap:0.5rem;"><strong>${displayPrice}</strong><div style="display:flex;">${actionBtns}</div></div></div>`;
     });
+}
+
+// DELETE LOGIC (WITH PIN)
+function initDeleteBooking(pnr) {
+    currentCancellationPNR = pnr; // Reuse variable for ID tracking
+    document.getElementById('cancel-modal-title').innerText = "Delete Record";
+    document.getElementById('cancel-modal-desc').innerText = "To permanently delete this record, enter your Booking PIN.";
+    document.getElementById('btn-confirm-action').innerText = "Delete Forever";
+    document.getElementById('btn-confirm-action').onclick = confirmDeletion; // Switch handler
+    document.getElementById('cancel-pin-input').value = '';
+    document.getElementById('cancel-modal').classList.remove('hidden');
+}
+
+function confirmDeletion() {
+    const pin = document.getElementById('cancel-pin-input').value;
+    const history = loggedInUser.history;
+    const b = history.find(x => x.pnr === currentCancellationPNR);
+    if (b && pin === b.pin) {
+        loggedInUser.history = loggedInUser.history.filter(x => x.pnr !== currentCancellationPNR);
+        updateUserInDB();
+        showHistory();
+        closeCancelModal();
+        showToast("Record Deleted.", "success");
+    } else { showToast("Incorrect PIN.", "error"); }
 }
 
 function viewHistoryTicket(pnr) {
@@ -1189,6 +1279,12 @@ function viewHistoryTicket(pnr) {
 }
 
 function cancelHistoryBooking(pnr) {
+    // Reset modal to Cancel Mode
+    document.getElementById('cancel-modal-title').innerText = "Cancel Booking";
+    document.getElementById('cancel-modal-desc').innerText = "To confirm cancellation, please enter your Booking PIN set during checkout.";
+    document.getElementById('btn-confirm-action').innerText = "Confirm Cancel";
+    document.getElementById('btn-confirm-action').onclick = confirmCancellation;
+
     const history = loggedInUser.history;
     const b = history.find(x => x.pnr === pnr);
     if (!b) return;
