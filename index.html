@@ -9,19 +9,19 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
-
+ 
     <div id="intro-overlay">
         <div class="intro-content">
             <h1 class="intro-logo">Tripify.</h1>
             <div class="intro-tagline-wrapper">
                 <p class="intro-tagline">
-                    <span class="typewriter-text part-1">Move the World, Your Way!</span><br>
+                   <span class="typewriter-text part-1">Move the World, Your Way!</span><br>
                 </p>
-            </div>
+           </div>
             <button class="btn-enter" onclick="enterSite()">Enter Site</button>
         </div>
     </div>
-
+ 
     <nav class="navbar">
         <div class="logo" onclick="switchTab('flights')" style="display: flex; align-items: center; cursor: pointer;">
             <img src="logo.jpg" alt="Tripify Logo" style="height: 40px; margin-right: 10px;">
@@ -31,113 +31,173 @@
             <button id="btn-flights" class="nav-btn active" onclick="switchTab('flights')">Flights</button>
             <button id="btn-hotels" class="nav-btn" onclick="switchTab('hotels')">Hotels</button>
             <button id="btn-history" class="nav-btn" onclick="showHistory()">My Bookings</button>
-            <button id="nav-user-btn" class="btn-login" onclick="openAuthModal()">Sign In</button>
+            <button id="theme-toggle" class="nav-btn" onclick="toggleTheme()" title="Toggle Dark Mode">🌙</button>
+            <button id="nav-user-btn" class="btn-login" onclick="handleUserNavClick()">Sign In</button>
         </div>
     </nav>
-
+ 
     <header id="main-hero" class="hero">
         <div class="hero-content">
             <h1 class="hero-title">“Your gateway to unforgettable journeys”</h1>
             <p class="hero-subtitle">800+ Destinations. Comprehensive Data. Zero Clutter.</p>
             
             <div id="flight-section" class="search-container">
-                <div class="search-context-bar">
-                    <div class="context-group">
-                        <label>Your Current Location</label>
-                        <input type="text" id="user-country-input" list="country-list-data" placeholder="Type Country (e.g. India)" onchange="refreshCityLogic()">
-                        <datalist id="country-list-data"></datalist>
-                    </div>
-                    
-                    <div class="context-group">
-                        <label>Travel Type</label>
-                        <div class="travel-type-wrapper">
-                            <label class="travel-option">
-                                <input type="radio" name="tripType" value="domestic" checked onclick="refreshCityLogic()">
-                                <span>Domestic</span>
-                            </label>
-                            <label class="travel-option">
-                                <input type="radio" name="tripType" value="international" onclick="refreshCityLogic()">
-                                <span>International</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
+               <div class="search-context-bar">
+                   <div id="recent-searches" class="recent-chips-container"></div>
 
-                <div class="search-grid">
-                    <div class="input-group">
-                        <label>From</label>
-                        <input type="text" id="flight-origin" list="dynamic-list-origin" placeholder="Type city..." oninput="filterCities(this, 'origin')">
-                        <datalist id="dynamic-list-origin"></datalist>
-                    </div>
-                    <div class="input-group">
-                        <label>To</label>
-                        <input type="text" id="flight-destination" list="dynamic-list-dest" placeholder="Type city..." oninput="filterCities(this, 'dest')">
-                        <datalist id="dynamic-list-dest"></datalist>
-                    </div>
-                    <div class="input-group">
-                        <label>Date</label>
-                        <input type="date" id="flight-date">
-                    </div>
-                    <div class="input-group">
-                        <label>Class</label>
-                        <select id="flight-class" class="input-select">
-                            <option value="Economy">Economy</option>
-                            <option value="Business">Business</option>
-                            <option value="First">First Class</option>
-                        </select>
-                    </div>
-                    <div class="input-group small-group">
-                        <label>Travelers</label>
-                        <input type="number" id="flight-passengers" min="1" max="10" value="1">
-                    </div>
-                </div>
-                
-                <div class="search-action">
-                    <button onclick="handleSearch('flight')">Search Flights</button>
-                </div>
-            </div>
+                   <div class="context-group">
+                       <label>Your Current Location</label>
+                       <input type="text" id="user-country-input" list="country-list-data" placeholder="Type Country (e.g. India)" onchange="refreshCityLogic()">
+                       <datalist id="country-list-data"></datalist>
+                   </div>
+                   
+                   <div class="context-group">
+                       <label>Region</label>
+                       <div class="travel-type-wrapper">
+                           <label class="travel-option">
+                                <input type="radio" name="regionType" value="domestic" checked onclick="refreshCityLogic()">
+                               <span>Domestic</span>
+                           </label>
+                           <label class="travel-option">
+                                <input type="radio" name="regionType" value="international" onclick="refreshCityLogic()">
+                               <span>International</span>
+                           </label>
+                       </div>
+                   </div>
 
-            <div id="hotel-section" class="search-container hidden">
-                <div class="search-grid">
-                    <div class="input-group">
-                        <label>Select Country (Mandatory)</label>
-                        <input type="text" id="hotel-country" list="hotel-country-list" placeholder="Select Country" onchange="populateHotelCities()">
-                        <datalist id="hotel-country-list"></datalist>
-                    </div>
-                    <div class="input-group">
-                        <label>Select City</label>
-                        <input type="text" id="hotel-city" list="hotel-city-list" placeholder="Select City">
-                        <datalist id="hotel-city-list"></datalist>
-                    </div>
-                    <div class="input-group">
-                        <label>Check-in</label>
-                        <input type="date" id="hotel-checkin">
-                    </div>
-                    <div class="input-group">
-                        <label>Check-out</label>
-                        <input type="date" id="hotel-checkout">
-                    </div>
-                    <div class="input-group small-group">
-                        <label>Total Guests</label>
-                        <input type="number" id="hotel-guests" value="2" min="1">
-                    </div>
-                </div>
-                <div class="search-action">
-                    <button onclick="handleSearch('hotel')">Search Hotels</button>
-                </div>
-            </div>
+                   <div class="context-group">
+                       <label>Trip Type</label>
+                       <div class="travel-type-wrapper">
+                           <label class="travel-option">
+                                <input type="radio" name="tripType" value="oneway" checked onclick="toggleReturnDate()">
+                               <span>One Way</span>
+                           </label>
+                           <label class="travel-option">
+                                <input type="radio" name="tripType" value="roundtrip" onclick="toggleReturnDate()">
+                               <span>Round Trip</span>
+                           </label>
+                       </div>
+                   </div>
+               </div>
+ 
+               <div class="search-grid" id="flight-search-grid">
+                   <div class="input-group">
+                       <label>From</label>
+                       <input type="text" id="flight-origin" list="dynamic-list-origin" placeholder="Type city..." oninput="filterCities(this, 'origin')">
+                       <datalist id="dynamic-list-origin"></datalist>
+                   </div>
+                   <div class="input-group">
+                       <label>To</label>
+                       <input type="text" id="flight-destination" list="dynamic-list-dest" placeholder="Type city..." oninput="filterCities(this, 'dest')">
+                       <datalist id="dynamic-list-dest"></datalist>
+                   </div>
+                   <div class="input-group">
+                       <label>Departure</label>
+                       <input type="date" id="flight-date" onchange="updateReturnMinDate()">
+                   </div>
+                   <div class="input-group hidden" id="return-date-group">
+                       <label>Return</label>
+                       <input type="date" id="flight-return-date">
+                   </div>
+
+                   <div class="input-group">
+                       <label>Class</label>
+                       <select id="flight-class" class="input-select">
+                           <option value="Economy">Economy</option>
+                           <option value="Business">Business</option>
+                           <option value="First">First Class</option>
+                       </select>
+                   </div>
+                   <div class="input-group small-group">
+                       <label>Travelers</label>
+                       <input type="number" id="flight-passengers" min="1" max="10" value="1">
+                   </div>
+               </div>
+               
+               <div class="search-action">
+                   <button onclick="handleSearch('flight')">Search Flights</button>
+               </div>
+           </div>
+ 
+           <div id="hotel-section" class="search-container hidden">
+               <div class="search-grid">
+                   <div class="input-group">
+                       <label>Select Country (Mandatory)</label>
+                       <input type="text" id="hotel-country" list="hotel-country-list" placeholder="Select Country" onchange="populateHotelCities(); resetResultsUI()" oninput="resetResultsUI()">
+                       <datalist id="hotel-country-list"></datalist>
+                   </div>
+                   <div class="input-group">
+                       <label>Select City</label>
+                       <input type="text" id="hotel-city" list="hotel-city-list" placeholder="Select City" oninput="resetResultsUI()">
+                       <datalist id="hotel-city-list"></datalist>
+                   </div>
+                   <div class="input-group">
+                       <label>Check-in</label>
+                       <input type="date" id="hotel-checkin" oninput="resetResultsUI()">
+                   </div>
+                   <div class="input-group">
+                       <label>Check-out</label>
+                       <input type="date" id="hotel-checkout" oninput="resetResultsUI()">
+                   </div>
+                   <div class="input-group small-group">
+                       <label>Total Guests</label>
+                       <input type="number" id="hotel-guests" value="2" min="1" oninput="resetResultsUI()">
+                   </div>
+               </div>
+               <div class="search-action">
+                   <button onclick="handleSearch('hotel')">Search Hotels</button>
+               </div>
+           </div>
         </div>
     </header>
-
+ 
     <main id="main-content" class="hidden">
         <div id="map-wrapper"><div id="map-container"></div></div>
+        
+        <section id="filters-container" class="filters-bar">
+            <div class="filter-header">
+                <span>⚡ Filters</span>
+                <button onclick="clearFilters()" class="btn-clear-filters">Reset</button>
+            </div>
+            <div class="filter-options">
+                <div class="filter-group">
+                    <label>Sort By</label>
+                    <select id="sort-results" class="input-select" style="min-width: 140px;" onchange="applyFilters()">
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="duration">Duration: Shortest</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Max Price</label>
+                    <input type="range" id="price-range" min="50" max="5000" step="50" oninput="updatePriceLabel(this.value); applyFilters()">
+                    <span id="price-val">Any</span>
+                </div>
+                <div id="flight-filters" class="filter-subgroup">
+                    <label>Airline</label>
+                    <select id="filter-airline" class="input-select" onchange="applyFilters()">
+                        <option value="all">All Airlines</option>
+                    </select>
+                </div>
+                <div id="hotel-filters" class="filter-subgroup hidden">
+                    <label>Min Rating</label>
+                    <select id="filter-rating" class="input-select" onchange="applyFilters()">
+                        <option value="0">Any Rating</option>
+                        <option value="3">3+ Stars</option>
+                        <option value="4">4+ Stars</option>
+                        <option value="4.5">4.5+ Excellent</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
         <section id="results-header" class="results-header">
-            <h2>Available Options</h2>
+           <h2>Available Options</h2>
             <p id="results-count" class="text-muted">Searching...</p>
         </section>
         <section id="results-area" class="results-list"></section>
     </main>
-
+ 
     <main id="history-view" class="hidden">
         <div class="history-container">
             <h2 style="margin-bottom: 1.5rem;">My Bookings</h2>
@@ -145,7 +205,7 @@
             <button class="btn-secondary" onclick="switchTab('flights')" style="margin-top: 2rem;">Back to Search</button>
         </div>
     </main>
-
+ 
     <div id="details-modal" class="modal-overlay hidden">
         <div class="modal-content small-modal">
             <span class="close-btn" onclick="closeDetailsModal()">&times;</span>
@@ -154,54 +214,144 @@
             <div style="padding: 1.5rem;"><button class="btn-secondary full-width-btn" onclick="closeDetailsModal()">Close</button></div>
         </div>
     </div>
-
-    <div id="auth-modal" class="modal-overlay hidden">
-        <div class="modal-content small-modal auth-container">
-            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
-            
-            <div id="auth-step-1">
-                <div class="auth-tabs">
-                    <button id="tab-signin" class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
-                    <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
-                </div>
-                <div class="auth-body">
-                    <h2 id="auth-title" style="margin-bottom: 1rem; text-align: center;">Welcome Back</h2>
-                    <div id="register-fields" class="hidden">
-                        <div class="input-wrapper"><label>Full Name</label><input type="text" id="auth-name" class="input-field" placeholder="John Doe"></div>
+ 
+    <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-content small-modal">
+            <span class="close-btn" onclick="closeProfileModal()">&times;</span>
+            <div class="modal-header"><h2>My Profile</h2></div>
+            <div id="profile-main-view" style="padding: 2rem;">
+                <div class="profile-info" style="margin-bottom: 2rem; text-align: center;">
+                    <div style="width: 60px; height: 60px; background: #2563EB; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1rem auto; font-weight: 700;" id="profile-avatar">U</div>
+                    <h3 id="profile-name">User Name</h3>
+                    <p id="profile-email" class="text-muted">email@example.com</p>
+                    
+                    <div class="wallet-card">
+                        <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Tripify Coins</span>
+                        <div style="font-size: 2rem; font-weight: 800; margin: 0.5rem 0;" id="profile-coins">0</div>
+                        <small id="coin-rate-text">1 Coin = ₹0.25</small>
                     </div>
-                    <div class="input-wrapper" style="margin-top: 1rem;"><label>Email Address</label><input type="email" id="auth-email" class="input-field" placeholder="name@example.com"></div>
-                    <div class="input-wrapper" style="margin-top: 1rem;"><label>Password</label><input type="password" id="auth-password" class="input-field" placeholder="••••••••"></div>
-                    <div id="forgot-link-container" class="text-right" style="margin-top: 0.5rem;"><a href="#" class="text-link" onclick="initForgotFlow()">Forgot Password?</a></div>
-                    <button class="btn-google" onclick="initGoogleAuth()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"><span>Continue with Google</span></button>
-                    <button class="btn-primary full-width-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Continue</button>
+                </div>
+                <div class="profile-actions" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button class="btn-secondary full-width-btn" onclick="openChangePassword()">Change Password</button>
+                    <button class="btn-secondary full-width-btn" onclick="openManageLoginPin()">Manage Login PIN</button>
+                    <button class="btn-danger full-width-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
 
-            <div id="auth-step-otp" class="hidden">
-                <div style="text-align: center; padding: 2rem;">
-                    <h3>Verify it's you</h3>
-                    <p class="text-muted" style="margin-bottom: 1.5rem;">We've sent a code to <br><strong id="otp-email-display">email</strong></p>
-                    <div class="input-wrapper"><input type="text" id="auth-otp" class="input-field" placeholder="Enter 6-digit OTP" style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;"></div>
-                    <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="verifyOTP()">Verify & Sign In</button>
-                    <button class="nav-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Resend Code</button>
+            <div id="profile-change-pass" class="hidden" style="padding: 2rem;">
+                <h4 style="margin-bottom:1rem;">Change Password</h4>
+                <div class="input-wrapper"><label>Current Password</label><input type="password" id="cp-current" class="input-field"></div>
+                <div class="input-wrapper" style="margin-top:0.5rem"><label>New Password</label><input type="password" id="cp-new" class="input-field"></div>
+                <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                    <button class="btn-secondary" style="flex:1" onclick="resetProfileView()">Cancel</button>
+                    <button class="btn-primary" style="flex:1" onclick="saveNewPassword()">Update</button>
                 </div>
             </div>
-
-            <div id="auth-step-forgot" class="hidden">
-                <div style="padding: 2rem;">
-                    <h3 id="forgot-title" style="text-align: center; margin-bottom: 1rem;">Recover Password</h3>
-                    <p id="forgot-desc" class="text-muted" style="text-align: center; margin-bottom: 1.5rem;">Enter your registered email to receive an OTP.</p>
-                    <div id="forgot-email-section"><div class="input-wrapper"><label>Email Address</label><input type="email" id="forgot-email" class="input-field" placeholder="name@example.com"></div></div>
-                    <div id="forgot-otp-section" class="hidden" style="margin-top: 1.5rem;"><div class="input-wrapper"><label>Enter OTP</label><input type="text" id="forgot-otp" class="input-field" placeholder="6-digit OTP" style="text-align: center; letter-spacing: 3px;"></div></div>
-                    <div id="forgot-reset-section" class="hidden" style="margin-top: 1.5rem;"><div class="input-wrapper"><label>Set New Password</label><input type="password" id="forgot-new-password" class="input-field" placeholder="New Password"></div></div>
-                    <button id="btn-forgot-action" class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="handleForgotOTP()">Send OTP</button>
-                    <button id="btn-reset-confirm" class="btn-primary full-width-btn hidden" style="margin-top: 1.5rem;" onclick="confirmPasswordReset()">Update Password</button>
-                    <button class="nav-btn full-width-btn" style="margin-top: 0.5rem;" onclick="closeAuthModal()">Cancel</button>
+            
+            <div id="profile-manage-pin" class="hidden" style="padding: 2rem;">
+                <h4 id="pin-manage-title" style="margin-bottom:0.5rem;">Manage Login PIN</h4>
+                <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1.5rem;">This PIN is required every time you log in.</p>
+                <div id="pin-set-container">
+                    <div class="input-wrapper"><label>New PIN (4 digits)</label><input type="password" id="mp-new" class="input-field" maxlength="4" style="text-align: center; letter-spacing: 5px;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                        <button class="btn-secondary" style="flex:1" onclick="resetProfileView()">Cancel</button>
+                        <button class="btn-primary" style="flex:1" onclick="saveLoginPin()">Set PIN</button>
+                    </div>
+                    <button id="btn-remove-pin" class="btn-danger full-width-btn hidden" style="margin-top: 1rem;" onclick="removeLoginPin()">Remove PIN</button>
+                     <div class="text-right" style="margin-top: 0.5rem;"><a href="#" class="text-link" onclick="recoverLoginPin()">Forgot Login PIN?</a></div>
                 </div>
             </div>
         </div>
     </div>
 
+    <div id="cancel-modal" class="modal-overlay hidden">
+        <div class="modal-content small-modal">
+            <span class="close-btn" onclick="closeCancelModal()">&times;</span>
+            <div class="modal-header"><h2>Cancel Booking</h2></div>
+            <div style="padding: 2rem;">
+                <p style="margin-bottom: 1.5rem; color: #4B5563;">To confirm cancellation, please enter your <strong>Booking PIN</strong> set during checkout.</p>
+                <div class="input-wrapper">
+                    <input type="password" id="cancel-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
+                </div>
+                <div class="text-right" style="margin-top: 1rem;"><a href="#" class="text-link" onclick="recoverBookingPin()">Forgot PIN?</a></div>
+                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                    <button class="btn-secondary" style="flex:1" onclick="closeCancelModal()">Back</button>
+                    <button class="btn-danger" style="flex:1" onclick="confirmCancellation()">Confirm Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+ 
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="modal-content small-modal auth-container">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            
+            <div id="auth-step-1">
+               <div class="auth-tabs">
+                   <button id="tab-signin" class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                   <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+               </div>
+               <div class="auth-body">
+                   <h2 id="auth-title" style="margin-bottom: 1rem; text-align: center;">Welcome Back</h2>
+                   <div id="register-fields" class="hidden">
+                       <div class="input-wrapper"><label>Full Name</label><input type="text" id="auth-name" class="input-field" placeholder="John Doe"></div>
+                   </div>
+                   <div class="input-wrapper" style="margin-top: 1rem;"><label>Email Address</label><input type="email" id="auth-email" class="input-field" placeholder="name@example.com"></div>
+                   <div class="input-wrapper" style="margin-top: 1rem;"><label>Password</label><input type="password" id="auth-password" class="input-field" placeholder="••••••••"></div>
+                   <div id="forgot-link-container" class="text-right" style="margin-top: 0.5rem;"><a href="#" class="text-link" onclick="initForgotFlow()">Forgot Password?</a></div>
+                   <button class="btn-google" onclick="initGoogleAuth()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"><span>Continue with Google</span></button>
+                   <button class="btn-primary full-width-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Continue</button>
+               </div>
+           </div>
+
+            <div id="auth-step-otp" class="hidden">
+               <div style="text-align: center; padding: 2rem;">
+                   <h3>Verify it's you</h3>
+                   <p class="text-muted" style="margin-bottom: 1.5rem;">We've sent a code to <br><strong id="otp-email-display">email</strong></p>
+                   <div class="input-wrapper"><input type="text" id="auth-otp" class="input-field" placeholder="Enter 6-digit OTP" style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;"></div>
+                   <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="verifyOTP()">Verify</button>
+                   <button class="nav-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Resend Code</button>
+               </div>
+           </div>
+
+           <div id="auth-step-set-pin" class="hidden">
+                <div style="padding: 2rem; text-align: center;">
+                    <h3>Set Login PIN</h3>
+                    <p class="text-muted" style="margin-bottom: 1.5rem;">Create a 4-digit PIN for extra security.</p>
+                    <div class="input-wrapper">
+                        <input type="password" id="set-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
+                    </div>
+                    <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="saveNewLoginPinReg()">Save & Login</button>
+                </div>
+           </div>
+
+           <div id="auth-step-pin" class="hidden">
+                <div style="padding: 2rem; text-align: center;">
+                    <h3>Enter Login PIN</h3>
+                    <p class="text-muted">Security Check</p>
+                    <div class="input-wrapper" style="margin-top: 1.5rem;">
+                        <input type="password" id="login-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
+                    </div>
+                    <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="verifyLoginPin()">Enter</button>
+                    <div class="text-right" style="margin-top: 1rem;"><a href="#" class="text-link" onclick="recoverLoginPinAuth()">Forgot PIN?</a></div>
+                </div>
+           </div>
+
+            <div id="auth-step-forgot" class="hidden">
+               <div style="padding: 2rem;">
+                   <h3 id="forgot-title" style="text-align: center; margin-bottom: 1rem;">Recover Password</h3>
+                   <p id="forgot-desc" class="text-muted" style="text-align: center; margin-bottom: 1.5rem;">Enter your registered email to receive an OTP.</p>
+                   <div id="forgot-email-section"><div class="input-wrapper"><label>Email Address</label><input type="email" id="forgot-email" class="input-field" placeholder="name@example.com"></div></div>
+                   <div id="forgot-otp-section" class="hidden" style="margin-top: 1.5rem;"><div class="input-wrapper"><label>Enter OTP</label><input type="text" id="forgot-otp" class="input-field" placeholder="6-digit OTP" style="text-align: center; letter-spacing: 3px;"></div></div>
+                   <div id="forgot-reset-section" class="hidden" style="margin-top: 1.5rem;"><div class="input-wrapper"><label>Set New Password</label><input type="password" id="forgot-new-password" class="input-field" placeholder="New Password"></div></div>
+                   <button id="btn-forgot-action" class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="handleForgotOTP()">Send OTP</button>
+                   <button id="btn-reset-confirm" class="btn-primary full-width-btn hidden" style="margin-top: 1.5rem;" onclick="confirmPasswordReset()">Update Password</button>
+                   <button class="nav-btn full-width-btn" style="margin-top: 0.5rem;" onclick="closeAuthModal()">Cancel</button>
+               </div>
+           </div>
+        </div>
+    </div>
+ 
     <div id="booking-modal" class="modal-overlay hidden">
         <div class="modal-content wide-modal">
             <button class="close-btn" onclick="closeModal()">&times;</button>
@@ -213,56 +363,146 @@
                     <div style="text-align:right"><span class="lbl">Total</span><strong id="modal-total" class="text-blue">$0</strong></div>
                 </div>
             </div>
-
+ 
             <div id="booking-scroll-container" class="form-scroll-area">
-                <div id="booking-step-1">
-                    <h4 class="form-section-title">Primary Contact</h4>
-                    <div class="grid-2">
-                        <div class="input-wrapper"><label>Email ID *</label><div style="display: flex; gap: 10px;"><input type="email" id="contact-email" class="input-field mandatory" placeholder="e.g. name@mail.com" style="flex:1;"><button onclick="sendTripifyID(this)" class="btn-secondary" style="padding: 0 1rem; font-size: 0.8rem; white-space: nowrap;">Send Tripify ID</button></div></div>
-                        <div class="input-wrapper"><label>Mobile Number *</label><div style="display: flex; gap: 10px;"><select id="contact-country-code" class="input-select" style="width: 80px; flex-shrink: 0;"><option value="+91">+91</option><option value="+1">+1</option><option value="+44">+44</option><option value="+971">+971</option></select><input type="tel" id="contact-phone" class="input-field mandatory" placeholder="9876543210" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"></div></div>
-                    </div>
-                    <hr class="divider">
-                    <div id="guest-breakdown-section"></div>
-                    <div id="passenger-forms"></div>
-                </div>
+               <div id="booking-step-1">
+                   <h4 class="form-section-title">Primary Contact</h4>
+                   <div class="grid-2">
+                       <div class="input-wrapper"><label>Email ID *</label><div style="display: flex; gap: 10px;"><input type="email" id="contact-email" class="input-field mandatory" placeholder="e.g. name@mail.com" style="flex:1;"><button onclick="sendTripifyID(this)" class="btn-secondary" style="padding: 0 1rem; font-size: 0.8rem; white-space: nowrap;">Send Tripify ID</button></div></div>
+                       <div class="input-wrapper"><label>Mobile Number *</label><div style="display: flex; gap: 10px;"><select id="contact-country-code" class="input-select" style="width: 80px; flex-shrink: 0;"><option value="+91">+91</option><option value="+1">+1</option><option value="+44">+44</option><option value="+971">+971</option></select><input type="tel" id="contact-phone" class="input-field mandatory" placeholder="9876543210" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"></div></div>
+                   </div>
+                   <hr class="divider">
+                   <div id="guest-breakdown-section"></div>
+                   <div id="passenger-forms"></div>
+               </div>
 
-                <div id="booking-step-payment" class="hidden">
-                    <h3 style="margin-bottom:1.5rem;">Select Payment Mode</h3>
-                    <div class="payment-options">
-                        <div class="payment-card" onclick="selectPayment(this, 'Credit Card')"><div class="pay-icon">💳</div><div class="pay-text"><strong>Credit/Debit Card</strong><p class="text-muted">Visa, Mastercard, RuPay</p></div></div>
-                        <div class="payment-card" onclick="selectPayment(this, 'UPI')"><div class="pay-icon">📱</div><div class="pay-text"><strong>UPI</strong><p class="text-muted">GPay, PhonePe, Paytm</p></div></div>
-                        <div class="payment-card" onclick="selectPayment(this, 'Net Banking')"><div class="pay-icon">🏦</div><div class="pay-text"><strong>Net Banking</strong><p class="text-muted">All Major Banks</p></div></div>
-                    </div>
-                    <div id="payment-loader" class="hidden" style="text-align:center; margin-top:30px;"><div class="loader"></div><p style="margin-top:10px; font-weight:600; color:#2563EB">Processing Secure Payment...</p></div>
-                </div>
+               <div id="booking-step-seats" class="hidden">
+                   <h4 class="form-section-title">Select Seats</h4>
+                   <p style="margin-bottom: 1rem; color: #6B7280;">Please select <strong id="seats-to-select">1</strong> seat(s).</p>
+                   <div class="plane-container">
+                       <div class="cockpit"></div>
+                       <div class="seat-grid" id="seat-map-grid"></div>
+                   </div>
+                   <div class="seat-legend">
+                       <div class="legend-item"><div class="seat available"></div><span>Available</span></div>
+                       <div class="legend-item"><div class="seat occupied"></div><span>Occupied</span></div>
+                       <div class="legend-item"><div class="seat selected"></div><span>Selected</span></div>
+                   </div>
+                   <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="confirmSeats()">Confirm Seats</button>
+               </div>
+ 
+               <div id="booking-step-payment" class="hidden">
+                   <h3 style="margin-bottom:1.5rem;">Select Payment Mode</h3>
+                   
+                   <div class="promo-section" style="margin-bottom: 1.5rem; background: #F3F4F6; padding: 1rem; border-radius: 8px;">
+                       
+                       <div id="loyalty-redeem-block" class="hidden" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #ccc;">
+                           <div style="display: flex; justify-content: space-between; align-items: center;">
+                               <label style="font-weight: 700; color: #d97706; display: flex; align-items: center; gap: 5px;">
+                                   <span style="font-size: 1.2rem;">🪙</span> Redeem Coins
+                               </label>
+                               <span id="coin-balance-display" style="font-size: 0.9rem; font-weight: 600;">Bal: 0</span>
+                           </div>
+                           <div style="margin-top: 5px;">
+                               <input type="checkbox" id="use-coins-check" onchange="toggleCoinRedemption()">
+                               <span style="font-size: 0.9rem;">Use <span id="redeemable-coins">0</span> coins to save <span id="coin-save-amount">0</span></span>
+                           </div>
+                       </div>
 
-                <div id="booking-step-3" class="hidden" style="text-align: center;">
-                    <div class="success-banner"><h2 style="color:#10B981; margin-bottom:0.5rem;">🎉 Booking Successful!</h2><p style="color:#6B7280; font-size:0.9rem;">Your booking is confirmed.</p></div>
-                    <div id="ticket-print-area" class="digital-ticket">
-                        <div class="ticket-top"><span class="brand">Tripify.</span><span id="ticket-status" class="status-confirmed">CONFIRMED</span></div>
-                        <div class="ticket-main">
-                            <div id="ticket-flight-header" class="ticket-route"><h2 id="ticket-origin-code">ORG</h2><span class="plane-icon">✈</span><h2 id="ticket-dest-code">DES</h2></div>
-                            <div id="ticket-hotel-header" class="ticket-hotel-header hidden"><div class="hotel-dates-row"><div class="date-group"><span class="sub-label">CHECK-IN</span><h3 id="ticket-checkin-date">2023-10-01</h3></div><div class="stay-icon"><span>🌙</span></div><div class="date-group"><span class="sub-label">CHECK-OUT</span><h3 id="ticket-checkout-date">2023-10-05</h3></div></div></div>
-                            <div class="ticket-info-grid">
+                       <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; color: #4B5563;">HAVE A PROMO CODE?</label>
+                       <div style="display: flex; gap: 10px;">
+                           <input type="text" id="promo-code-input" class="input-field" placeholder="Enter Code (e.g. TRIP10)" style="flex:1;">
+                           <button class="btn-secondary" onclick="applyPromoCode()">Apply</button>
+                       </div>
+                       <p id="promo-message" style="font-size: 0.8rem; margin-top: 0.5rem;"></p>
+                   </div>
+
+                   <div class="payment-options">
+                       <div class="payment-card" onclick="selectPayment(this, 'Credit Card')"><div class="pay-icon">💳</div><div class="pay-text"><strong>Credit/Debit Card</strong><p class="text-muted">Visa, Mastercard, RuPay</p></div></div>
+                       <div class="payment-card" onclick="selectPayment(this, 'UPI')"><div class="pay-icon">📱</div><div class="pay-text"><strong>UPI</strong><p class="text-muted">GPay, PhonePe, Paytm</p></div></div>
+                       <div class="payment-card" onclick="selectPayment(this, 'Net Banking')"><div class="pay-icon">🏦</div><div class="pay-text"><strong>Net Banking</strong><p class="text-muted">All Major Banks</p></div></div>
+                   </div>
+                   <div id="payment-loader" class="hidden" style="text-align:center; margin-top:30px;"><div class="loader"></div><p style="margin-top:10px; font-weight:600; color:#2563EB">Processing Secure Payment...</p></div>
+               </div>
+ 
+               <div id="booking-step-3" class="hidden" style="text-align: center;">
+                   <div class="success-banner"><h2 style="color:#10B981; margin-bottom:0.5rem;">🎉 Booking Successful!</h2><p style="color:#6B7280; font-size:0.9rem;">Your booking is confirmed.</p></div>
+                   
+                   <div id="reward-earned-msg" style="background: #FFFBEB; color: #D97706; padding: 0.5rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 600; font-size: 0.9rem; border: 1px solid #FCD34D;">
+                       🪙 You earned 100 Tripify Coins!
+                   </div>
+
+                   <div id="ticket-print-area" class="digital-ticket">
+                       <div class="ticket-top"><span class="brand">Tripify.</span><span id="ticket-status" class="status-confirmed">CONFIRMED</span></div>
+                       <div class="ticket-main">
+                           <div id="ticket-flight-header" class="ticket-route"><h2 id="ticket-origin-code">ORG</h2><span class="plane-icon">✈</span><h2 id="ticket-dest-code">DES</h2></div>
+                           <div id="ticket-hotel-header" class="ticket-hotel-header hidden"><div class="hotel-dates-row"><div class="date-group"><span class="sub-label">CHECK-IN</span><h3 id="ticket-checkin-date">2023-10-01</h3></div><div class="stay-icon"><span>🌙</span></div><div class="date-group"><span class="sub-label">CHECK-OUT</span><h3 id="ticket-checkout-date">2023-10-05</h3></div></div></div>
+                           <div class="ticket-info-grid">
                                 <div class="ticket-field"><small id="ticket-lbl-pax">Passenger</small> <strong id="ticket-passenger">Name</strong></div>
                                 <div class="ticket-field"><small id="ticket-lbl-provider">Airline</small> <strong id="ticket-airline">Provider</strong></div>
                                 <div class="ticket-field" id="ticket-date-field"><small>Date</small> <strong id="ticket-date">Date</strong></div>
                                 <div class="ticket-field"><small id="ticket-lbl-class">Class</small> <strong id="ticket-class-display">Eco</strong></div>
-                            </div>
-                            <div class="ticket-footer"><small>Booking Ref:</small> <strong id="ticket-pnr">123</strong></div>
-                        </div>
-                        <div class="barcode-strip"></div>
-                    </div>
-                    <div class="ticket-actions"><button class="btn-secondary" onclick="downloadTicket()">Download Ticket</button><button class="btn-primary" onclick="closeModal()">Close</button></div>
-                </div>
+                           </div>
+                           <div class="ticket-footer"><small>Booking Ref:</small> <strong id="ticket-pnr">123</strong></div>
+                       </div>
+                       <div class="barcode-strip"></div>
+                   </div>
+                   <div class="ticket-actions"><button class="btn-secondary" onclick="downloadTicket()">Download Ticket</button><button class="btn-primary" onclick="closeModal()">Close</button></div>
+               </div>
             </div>
-
+ 
             <div id="modal-footer-action" class="modal-footer">
                 <button id="btn-proceed" class="btn-primary full-width-btn" onclick="proceedToPayment()">Proceed to Payment</button>
                 <button id="btn-pay-confirm" class="btn-primary full-width-btn hidden" onclick="confirmPayment()">Confirm & Pay</button>
             </div>
         </div>
     </div>
+ 
+    <footer class="tripify-footer">
+        <div class="footer-content">
+            <div class="footer-col brand-col">
+                <h2>Tripify.</h2>
+                <p>Move the world, your way. Premium travel experiences curated just for you.</p>
+                <div class="footer-icons">
+                    <span>🐦</span>
+                    <span>📘</span>
+                    <span>📷</span>
+                    <span>💼</span>
+                </div>
+            </div>
+            
+            <div class="footer-col">
+                <h3>COMPANY</h3>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-col">
+                <h3>SUPPORT</h3>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Privacy Policy</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-col newsletter-col">
+                <h3>NEWSLETTER</h3>
+                <div class="newsletter-form">
+                    <input type="email" placeholder="Your email">
+                    <button>➝</button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Tripify Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <div id="toast-container"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
