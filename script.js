@@ -15,14 +15,15 @@ let loggedInUser = null;
 let currentAuthMode = 'signin';
 let simulatedOTP = "123456";
 let forgotPasswordEmail = ""; 
-// Global array to store current search results for index-based access
 let currentMockData = []; 
 let currentSearchType = "";
 let currentCancellationPNR = null;
 let pendingLoginUser = null; 
 let selectedSeats = []; 
 let recentSearches = JSON.parse(localStorage.getItem('tripify_recent_searches')) || [];
-let mockDataId = 0; // Unique ID counter for mock data items
+let mockDataId = 0;
+let currentBookingStep = 0; 
+let compareList = []; 
 
 window.onload = function() {
     const savedTheme = localStorage.getItem('tripify_theme');
@@ -46,7 +47,6 @@ window.onload = function() {
     const fRetDate = document.getElementById('flight-return-date');
     fDate.setAttribute('min', todayStr); fDate.setAttribute('max', maxDateStr); fDate.value = todayStr;
     
-    // Set initial min return date
     fRetDate.setAttribute('min', todayStr); 
     fRetDate.setAttribute('max', maxDateStr);
 
@@ -67,22 +67,14 @@ window.onload = function() {
 function updateReturnMinDate() {
     const depInput = document.getElementById('flight-date');
     const retInput = document.getElementById('flight-return-date');
-    
-    if (depInput.value) {
-        retInput.setAttribute('min', depInput.value);
-    }
+    if (depInput.value) { retInput.setAttribute('min', depInput.value); }
 }
 
-// --- COIN CALCULATION LOGIC ---
 function getCoinValue() {
     const currency = getCurrencyInfo();
-    // 1 Coin = 0.25 INR
-    // Convert 0.25 INR to current currency.
-    // 1 USD = 84 INR => 1 INR = 1/84 USD.
     return (0.25 / 84) * currency.rate;
 }
 
-// --- TOAST NOTIFICATIONS ---
 function showToast(message, type = 'default') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -92,7 +84,6 @@ function showToast(message, type = 'default') {
     setTimeout(() => { toast.style.animation = 'fadeOut 0.5s forwards'; setTimeout(() => toast.remove(), 500); }, 3000);
 }
 
-// --- DARK MODE ---
 function toggleTheme() {
     const body = document.body;
     const btn = document.getElementById('theme-toggle');
@@ -191,18 +182,45 @@ function handleAuthProceed() {
     } else {
         const existingUser = usersDB.find(u => u.email === email);
         if (existingUser) { showToast("User already exists. Please Sign In.", "error"); switchAuthTab('signin'); return; }
+        
         simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
         const btn = document.querySelector('.auth-body .btn-primary');
         const oldText = btn.innerText;
-        btn.innerText = "Sending OTP...";
+        btn.innerText = "Sending Email...";
         btn.disabled = true;
-        setTimeout(() => {
+
+        // REAL EMAILJS LOGIC - WITH CRASH PROTECTION
+        if (typeof emailjs === 'undefined') {
+            btn.innerText = oldText; 
+            btn.disabled = false;
+            showToast("Error: Email system blocked by browser. Please disable Tracking Prevention.", "error");
+            return;
+        }
+
+        const templateParams = {
+            to_email: email,
+            otp_code: simulatedOTP
+        };
+
+        try {
+            emailjs.send('service_b77uqv2', 'template_2j5usvp', templateParams)
+                .then(function(response) {
+                    btn.innerText = oldText; btn.disabled = false;
+                    document.getElementById('auth-step-1').classList.add('hidden');
+                    document.getElementById('auth-step-otp').classList.remove('hidden');
+                    document.getElementById('otp-email-display').innerText = email;
+                    showToast("OTP sent to your email!", "success");
+                })
+                .catch(function(error) {
+                    btn.innerText = oldText; btn.disabled = false;
+                    showToast("Email failed. Check console.", "error");
+                    console.error('EmailJS Error Details:', error);
+                });
+        } catch (err) {
             btn.innerText = oldText; btn.disabled = false;
-            document.getElementById('auth-step-1').classList.add('hidden');
-            document.getElementById('auth-step-otp').classList.remove('hidden');
-            document.getElementById('otp-email-display').innerText = email;
-            alert(`GMAIL NOTIFICATION:\n\nYour Tripify Verification Code is: ${simulatedOTP}`);
-        }, 1500);
+            showToast("System Crash: " + err.message, "error");
+            console.error(err);
+        }
     }
 }
  
@@ -221,7 +239,6 @@ function saveNewLoginPinReg() {
     const emailInput = document.getElementById('auth-email').value;
     const passwordInput = document.getElementById('auth-password').value;
     const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
-    // COINS DEFAULT 0
     const newUser = { name: nameInput || emailInput.split('@')[0], email: emailInput, password: passwordInput, history: [], loginPin: pin, coins: 0 };
     usersDB.push(newUser);
     localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
@@ -264,15 +281,37 @@ function handleForgotOTP() {
     if(!existingUser) { showToast("Email not registered.", "error"); return; }
     forgotPasswordEmail = email;
     simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+    
     const btn = document.getElementById('btn-forgot-action');
-    btn.innerText = "Sending...";
+    const oldText = btn.innerText;
+    btn.innerText = "Sending Email...";
     btn.disabled = true;
-    setTimeout(() => {
-        btn.innerText = "Verify OTP"; btn.disabled = false;
-        btn.setAttribute('onclick', 'verifyForgotOTP()');
-        document.getElementById('forgot-otp-section').classList.remove('hidden');
-        alert(`GMAIL NOTIFICATION:\n\nPassword Recovery Code: ${simulatedOTP}`);
-    }, 1500);
+
+    // REAL EMAILJS LOGIC
+    if (typeof emailjs === 'undefined') {
+        btn.innerText = oldText; 
+        btn.disabled = false;
+        showToast("Error: Email system blocked by browser.", "error");
+        return;
+    }
+
+    const templateParams = {
+        to_email: email,
+        otp_code: simulatedOTP
+    };
+
+    emailjs.send('service_b77uqv2', 'template_2j5usvp', templateParams)
+        .then(function(response) {
+            btn.innerText = "Verify OTP"; btn.disabled = false;
+            btn.setAttribute('onclick', 'verifyForgotOTP()');
+            document.getElementById('forgot-otp-section').classList.remove('hidden');
+            showToast("Recovery OTP sent!", "success");
+        })
+        .catch(function(error) {
+            btn.innerText = oldText; btn.disabled = false;
+            showToast("Failed to send recovery email.", "error");
+            console.error('EmailJS Error:', error);
+        });
 }
  
 function verifyForgotOTP() {
@@ -430,18 +469,46 @@ function forceDateLimit(input, maxDate) {
     if (!input.value) return;
     if (input.value > maxDate) {
        showToast("Bookings max 1 year in advance.", "error");
-        input.value = maxDate;
+       input.value = maxDate;
     }
 }
  
 function sendTripifyID(btnElement) {
     const email = document.getElementById('contact-email').value;
     if (!email) { showToast("Please enter email first.", "error"); return; }
+    
     const randomNum = Math.floor(100000 + Math.random() * 900000);
     generatedTripifyID = "TP" + randomNum;
-    alert(`Simulation: Email sent to ${email}\n\nYour Tripify Verification ID is: ${generatedTripifyID}`);
-    btnElement.innerText = "Regenerate ID";
-    btnElement.disabled = false;
+    
+    const oldText = btnElement.innerText;
+    btnElement.innerText = "Sending...";
+    btnElement.disabled = true;
+
+    // REAL EMAILJS LOGIC
+    if (typeof emailjs === 'undefined') {
+        btnElement.innerText = oldText; 
+        btnElement.disabled = false;
+        showToast("Error: Email system blocked by browser.", "error");
+        return;
+    }
+
+    const templateParams = {
+        to_email: email,
+        otp_code: generatedTripifyID
+    };
+
+    emailjs.send('service_b77uqv2', 'template_2j5usvp', templateParams)
+        .then(function() {
+            btnElement.innerText = "Regenerate ID";
+            btnElement.disabled = false;
+            showToast("Tripify ID sent to your email!", "success");
+        })
+        .catch(function(error) {
+            btnElement.innerText = oldText;
+            btnElement.disabled = false;
+            showToast("Failed to send ID.", "error");
+            console.error('EmailJS Error:', error);
+        });
 }
  
 // --- HELPER FUNCS ---
@@ -501,6 +568,10 @@ function handleSearch(type) {
     const resultsArea = document.getElementById('results-area');
     const headerTitle = document.querySelector('#results-header h2');
     
+    // Capture Hotel Values HERE (Before setTimeout)
+    let hotelParams = null;
+    let flightParams = null;
+
     if (type === 'flight') {
         const originVal = document.getElementById('flight-origin').value;
         const destVal = document.getElementById('flight-destination').value;
@@ -518,6 +589,15 @@ function handleSearch(type) {
         }
         
         saveRecentSearch(originVal, destVal);
+        
+        // Capture Flight Params
+        flightParams = {
+            originVal, destVal, date: depDate, 
+            flightClass: document.getElementById('flight-class').value,
+            tripType: document.querySelector('input[name="regionType"]:checked').value,
+            originCountry: document.getElementById('user-country-input').value,
+            timeSlot: document.getElementById('flight-timeslot').value
+        };
 
     } else if (type === 'hotel') {
         const country = document.getElementById('hotel-country').value;
@@ -530,14 +610,18 @@ function handleSearch(type) {
         if (diffDays <= 0) { showToast("Checkout must be after Check-in.", "error"); return; }
         if (diffDays > 60) { showToast("Maximum stay is 60 days.", "error"); return; }
         
-        const checkinTime = document.getElementById('hotel-checkin-time').value;
-        const checkoutTime = document.getElementById('hotel-checkout-time').value;
-        const rooms = document.getElementById('hotel-rooms').value;
-        const beds = document.getElementById('hotel-beds').value;
-        const floor = document.getElementById('hotel-floor').value;
+        // Capture Hotel Params to pass inside setTimeout
+        hotelParams = {
+            city: city,
+            diffDays: diffDays,
+            checkinTime: document.getElementById('hotel-checkin-time').value,
+            checkoutTime: document.getElementById('hotel-checkout-time').value,
+            rooms: document.getElementById('hotel-rooms').value,
+            beds: document.getElementById('hotel-beds').value,
+            floor: document.getElementById('hotel-floor').value
+        };
 
         headerTitle.innerText = `Hotels in ${city}`;
-        renderHotelResults(city, diffDays, checkinTime, checkoutTime, rooms, beds, floor);
     }
 
     resultsArea.innerHTML = ''; 
@@ -567,26 +651,20 @@ function handleSearch(type) {
  
     setTimeout(() => {
         currentMockData = []; 
-        if (type === 'flight') {
-            const originVal = document.getElementById('flight-origin').value;
-            const destVal = document.getElementById('flight-destination').value;
-            const date = document.getElementById('flight-date').value;
-            const flightClass = document.getElementById('flight-class').value;
-            const tripType = document.querySelector('input[name="regionType"]:checked').value; 
-            const originCountry = document.getElementById('user-country-input').value;
-            const timeSlot = document.getElementById('flight-timeslot').value;
-
+        if (type === 'flight' && flightParams) {
             headerTitle.innerText = "Available Flights";
             if (map) {
-                const oCoord = getCityCoords(originVal);
-                const dCoord = getCityCoords(destVal);
-                const m1 = L.marker(oCoord).addTo(map).bindPopup("Origin: " + originVal);
-                const m2 = L.marker(dCoord).addTo(map).bindPopup("Dest: " + destVal);
+                const oCoord = getCityCoords(flightParams.originVal);
+                const dCoord = getCityCoords(flightParams.destVal);
+                const m1 = L.marker(oCoord).addTo(map).bindPopup("Origin: " + flightParams.originVal);
+                const m2 = L.marker(dCoord).addTo(map).bindPopup("Dest: " + flightParams.destVal);
                 mapMarkers.push(m1, m2);
                 mapRoute = L.polyline([oCoord, dCoord], {color: '#2563EB', weight: 4}).addTo(map);
                 map.fitBounds(mapRoute.getBounds(), {padding: [50, 50]});
             }
-            renderFlightResults(originVal, destVal, date, flightClass, tripType, originCountry, timeSlot);
+            renderFlightResults(flightParams.originVal, flightParams.destVal, flightParams.date, flightParams.flightClass, flightParams.tripType, flightParams.originCountry, flightParams.timeSlot);
+        } else if (type === 'hotel' && hotelParams) {
+            renderHotelResults(hotelParams.city, hotelParams.diffDays, hotelParams.checkinTime, hotelParams.checkoutTime, hotelParams.rooms, hotelParams.beds, hotelParams.floor);
         }
     }, 800);
 }
@@ -733,7 +811,8 @@ function renderHotelResults(city, nights, checkInT, checkOutT, rooms, beds, floo
 
 function applyFilters() {
     const resultsArea = document.getElementById('results-area');
-    resultsArea.innerHTML = '';
+    // PERFORMANCE FIX: Use a string buffer instead of innerHTML += loop to prevent reflows
+    let htmlContent = '';
     
     const sliderVal = parseInt(document.getElementById('price-range').value); 
     const sortVal = document.getElementById('sort-results').value;
@@ -769,21 +848,27 @@ function applyFilters() {
 
     document.getElementById('results-count').innerText = `Found ${filtered.length} options`;
 
+    // UPDATE COMPARE BUTTON STATE
+    document.getElementById('floating-compare-bar').classList.toggle('hidden', filtered.length === 0 || compareList.length === 0);
+    document.getElementById('compare-count').innerText = compareList.length;
+
     if (filtered.length === 0) {
         resultsArea.innerHTML = '<div style="text-align:center; padding:2rem; width:100%;"><h3>No results match your filters.</h3><button class="nav-btn" onclick="clearFilters()">Clear Filters</button></div>';
         return;
     }
 
     filtered.forEach(item => {
+        const isChecked = compareList.includes(item.id) ? 'checked' : '';
+
         if (item.type === 'flight') {
-            const routeStr = `${item.origin} -> ${item.dest}`;
-            const badge = item.isRoundTrip ? `<span class="badge-eco" style="background:#DBEAFE; color:#1E40AF; margin-left:10px;">Round Trip</span>` : '';
+            const badge = item.isRoundTrip ? `<span class="badge-eco" style="background:#DBEAFE; color:#1E40AF; margin-left:10px; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem;">Round Trip</span>` : '';
             
-            resultsArea.innerHTML += `
+            htmlContent += `
             <div class="flight-card">
                 <div class="airline-info">
                     <h3>${item.airline}</h3>
                     <p style="color:var(--text-muted)">${item.flightCode} • ${item.class}</p>
+                    <div style="margin-top:5px;"><input type="checkbox" ${isChecked} onchange="toggleCompare(${item.id})"> <small>Compare</small></div>
                 </div>
                 
                 <div class="flight-meta">
@@ -806,14 +891,14 @@ function applyFilters() {
                 </div>
             </div>`;
         } else {
-            // Updated Hotel Card to show beds/floor/rooms
-            resultsArea.innerHTML += `
+            htmlContent += `
             <div class="hotel-card">
                 <div class="hotel-info">
                     <h3>${item.name}</h3>
                     <p style="color:var(--primary); font-weight:600;">${item.room}</p>
                     <p>${item.roomCount} Rooms • ${item.bedCount} Bed(s)/Room • ${item.floorPref} Floor</p>
                     <span class="rating-badge">⭐ ${item.rating} Excellent</span>
+                    <div style="margin-top:5px;"><input type="checkbox" ${isChecked} onchange="toggleCompare(${item.id})"> <small>Compare</small></div>
                 </div>
                 <div class="price-tag"><h2>${item.currencySym}${item.price}</h2><small>for ${item.nights} nights</small></div>
                 <div class="action-buttons">
@@ -823,36 +908,102 @@ function applyFilters() {
             </div>`;
         }
     });
+    
+    // Single DOM update
+    resultsArea.innerHTML = htmlContent;
+}
+
+// --- NEW COMPARISON LOGIC ---
+function toggleCompare(id) {
+    if (compareList.includes(id)) {
+        compareList = compareList.filter(x => x !== id);
+    } else {
+        if (compareList.length >= 2) {
+            showToast("Can only compare 2 items.", "error");
+            applyFilters(); // Reset UI
+            return;
+        }
+        compareList.push(id);
+    }
+    document.getElementById('floating-compare-bar').classList.toggle('hidden', compareList.length === 0);
+    document.getElementById('compare-count').innerText = compareList.length;
+}
+
+function openCompareModal() {
+    if (compareList.length < 2) return showToast("Select 2 items to compare", "error");
+    const container = document.getElementById('compare-content');
+    container.innerHTML = '';
+    const item1 = currentMockData.find(x => x.id === compareList[0]);
+    const item2 = currentMockData.find(x => x.id === compareList[1]);
+    
+    // CALCULATE DIFF
+    const priceDiff = Math.abs(item1.price - item2.price);
+    const cheaperItem = item1.price < item2.price ? item1 : item2;
+    
+    // AUTO HIDE FLOATING BAR
+    document.getElementById('floating-compare-bar').classList.add('hidden');
+
+    container.innerHTML = `<div style="grid-column: span 2; background: #ECFDF5; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center; color: #065F46; font-weight: 700;">💡 Save ${item1.currencySym}${priceDiff} by choosing ${cheaperItem.airline || cheaperItem.name}</div>`;
+
+    [item1, item2].forEach(item => {
+        let details = item.type === 'flight' ? 
+            `<div class="detail-item"><span class="detail-label">Airline</span><span class="detail-val">${item.airline}</span></div>
+             <div class="detail-item"><span class="detail-label">Time</span><span class="detail-val">${item.time}</span></div>
+             <div class="detail-item"><span class="detail-label">Duration</span><span class="detail-val">${item.duration}</span></div>` :
+            `<div class="detail-item"><span class="detail-label">Rating</span><span class="detail-val">${item.rating}</span></div>
+             <div class="detail-item"><span class="detail-label">Room</span><span class="detail-val">${item.room}</span></div>`;
+            
+        container.innerHTML += `
+        <div class="compare-card" style="border:1px solid var(--border); padding:1.5rem; border-radius:12px; background:var(--bg-light);">
+            <h3>${item.airline || item.name}</h3>
+            <h2 style="color:var(--primary); font-size:2rem; margin:0.5rem 0;">${item.currencySym}${item.price}</h2>
+            ${details}
+            <button class="book-btn full-width-btn" style="margin-top:1rem;" onclick="initBooking(${item.id}); closeCompareModal()">Book This</button>
+        </div>`;
+    });
+    document.getElementById('compare-modal').classList.remove('hidden');
+}
+
+function closeCompareModal() { 
+    document.getElementById('compare-modal').classList.add('hidden'); 
+    compareList = []; // Clear selection
+    applyFilters(); // Re-render to uncheck boxes
 }
  
+// --- OVERHAULED DETAILS MODALS ---
 function openFlightDetails(name, code, plane) {
-    document.getElementById('detail-airline').innerText = name;
+    document.getElementById('detail-title').innerText = name + " Overview";
     document.getElementById('detail-content').innerHTML = `
-        <div class="detail-row"><span>Flight Code:</span> <strong>${code}</strong></div>
-        <div class="detail-row"><span>Aircraft:</span> <strong>${plane}</strong></div>
-        <div class="detail-row"><span>Meal:</span> <strong>Included</strong></div>
-        <div class="detail-row"><span>Baggage:</span> <strong>25kg Check-in</strong></div>`;
+        <div style="text-align:center; margin-bottom:20px;"><i class="fas fa-plane" style="font-size:3rem; color:var(--primary);"></i></div>
+        <div class="detail-item"><span class="detail-label">Flight Code</span><span class="detail-val">${code}</span></div>
+        <div class="detail-item"><span class="detail-label">Aircraft</span><span class="detail-val">${plane}</span></div>
+        <div class="detail-item"><span class="detail-label">Meal Plan</span><span class="detail-val" style="color:var(--success);">Included ✅</span></div>
+        <div class="detail-item"><span class="detail-label">Baggage</span><span class="detail-val">25kg Check-in + 7kg Cabin</span></div>
+        <div class="detail-item"><span class="detail-label">Status</span><span class="detail-val" style="color:var(--success);">On Time</span></div>
+        `;
     document.getElementById('details-modal').classList.remove('hidden');
 }
  
 function openHotelDetails(name, roomType) {
     const bed = bedTypes[Math.floor(Math.random() * bedTypes.length)];
     const view = views[Math.floor(Math.random() * views.length)];
-    const ac = Math.random() > 0.1 ? "Air Conditioned" : "Non-AC";
-    document.getElementById('detail-airline').innerText = name;
+    document.getElementById('detail-title').innerText = name;
     document.getElementById('detail-content').innerHTML = `
-        <div class="detail-row"><span>Room Type:</span> <strong>${roomType}</strong></div>
-        <div class="detail-row"><span>Bedding:</span> <strong>${bed}</strong></div>
-        <div class="detail-row"><span>View:</span> <strong>${view}</strong></div>
-        <div class="detail-row"><span>Climate:</span> <strong>${ac}</strong></div>
-        <div class="detail-row"><span>Occupancy:</span> <strong>Max 3 Adults</strong></div>
-        <div class="detail-row"><span>Cancellation:</span> <strong>Free up to 24h</strong></div>`;
+        <div style="text-align:center; margin-bottom:20px;"><i class="fas fa-hotel" style="font-size:3rem; color:var(--primary);"></i></div>
+        <div class="detail-item"><span class="detail-label">Room Type</span><span class="detail-val">${roomType}</span></div>
+        <div class="detail-item"><span class="detail-label">Bedding</span><span class="detail-val">${bed}</span></div>
+        <div class="detail-item"><span class="detail-label">View</span><span class="detail-val">${view}</span></div>
+        <div class="detail-item"><span class="detail-label">Amenities</span><span class="detail-val">WiFi, Pool, Gym, Breakfast</span></div>
+        <div class="detail-item"><span class="detail-label">Cancellation</span><span class="detail-val" style="color:var(--success);">Free up to 24h</span></div>
+        `;
     document.getElementById('details-modal').classList.remove('hidden');
 }
  
 function closeDetailsModal() { document.getElementById('details-modal').classList.add('hidden'); }
  
+// CRITICAL FIX FOR BUG 4: INIT BOOKING LOGIC
 function initBooking(arg1) {
+    console.log("Booking Init Triggered for ID:", arg1);
     if(!loggedInUser) {
        showToast("Please Sign In to book.", "error");
        openAuthModal();
@@ -860,11 +1011,16 @@ function initBooking(arg1) {
     }
 
     let item = null;
-    if(typeof arg1 === 'number') {
-        item = currentMockData.find(x => x.id === arg1);
+    // Ensure loose equality check if types mismatch (string vs number)
+    if(typeof arg1 === 'number' || typeof arg1 === 'string') {
+        item = currentMockData.find(x => x.id == arg1);
     }
     
-    if(!item) return;
+    if(!item) { 
+        console.error("Item not found in currentMockData"); 
+        showToast("Error loading booking details. Please try searching again.", "error");
+        return; 
+    }
 
     const currency = getCurrencyInfo();
     let name, price, type, routeInfo, roomType = "", date, checkOut = "";
@@ -893,22 +1049,24 @@ function initBooking(arg1) {
         originalPrice: price,
         discountApplied: 0,
         coinsRedeemed: 0,
+        seatSurcharge: 0, // NEW
         // Save specific preferences to trip object
         metaDetails: item.type === 'hotel' ? `${item.roomCount} Rooms, ${item.bedCount} Beds, ${item.floorPref} Floor` : `Time: ${item.time}`
     };
     
+    currentBookingStep = 1; // Start Contact Step
+    updateBackBtnVisibility();
+
     document.getElementById('modal-trip-name').innerText = name;
     document.getElementById('guest-breakdown-section').innerHTML = ''; 
     document.getElementById('loyalty-redeem-block').classList.add('hidden'); 
 
+    // COIN DISPLAY FOR BOTH HOTELS AND FLIGHTS
     if(loggedInUser.coins > 0) {
         document.getElementById('loyalty-redeem-block').classList.remove('hidden');
         document.getElementById('coin-balance-display').innerText = `Bal: ${loggedInUser.coins}`;
-        const coinVal = getCoinValue();
-        const discountValue = (loggedInUser.coins * coinVal).toFixed(2);
-        document.getElementById('redeemable-coins').innerText = loggedInUser.coins; 
-        document.getElementById('coin-save-amount').innerText = `${currency.symbol}${discountValue}`;
-        document.getElementById('use-coins-check').checked = false;
+        document.getElementById('coin-redeem-input').value = 0;
+        document.getElementById('coin-redeem-input').max = loggedInUser.coins;
     }
 
     if (type === 'flight') {
@@ -982,7 +1140,7 @@ function renderPassengerForms(totalCount, labelType, adultCount = 0, childCount 
     let adultIdx = 1, childIdx = 1;
     if (labelType === "Passenger") { for(let i=1; i<=totalCount; i++) html += generateFormHTML(i, "Passenger", userCountry); } 
     else { for(let i=1; i<=adultCount; i++) html += generateFormHTML(adultIdx++, "Adult", userCountry); for(let i=1; i<=childCount; i++) html += generateFormHTML(childIdx++, "Child", userCountry); }
-    html += `<div class="passenger-item" style="border-left: 4px solid #2563EB;"><h4 class="form-section-title">Security</h4><div class="input-wrapper"><label>Set Booking PIN (4 Digits) *</label><input type="password" id="booking-pin" class="input-field mandatory" maxlength="4" placeholder="1234"></div></div>`;
+    html += `<div class="passenger-item" style="border-left: 4px solid var(--primary);"><h4 class="form-section-title">Security</h4><div class="input-wrapper"><label>Set Booking PIN (4 Digits) *</label><input type="password" id="booking-pin" class="input-field mandatory" maxlength="4" placeholder="1234"></div></div>`;
     formContainer.innerHTML = html;
 }
  
@@ -994,18 +1152,50 @@ function generateFormHTML(index, typeLabel, country) {
     const color = (typeLabel === "Child") ? "#10B981" : "#E5E7EB"; 
     const ageLimit = (typeLabel === "Child") ? 'max="17"' : 'min="18"';
     let extraFieldHTML = typeLabel !== "Child" ? `<div class="input-wrapper"><label>${idLabel}</label><input type="text" ${idId} class="input-field mandatory" placeholder="${idPlaceholder}"></div>` : `<div class="input-wrapper"></div>`; 
+    
+    // NEW: PASSPORT LOGIC
+    // Required for Flights (Always) OR International Hotels
+    // Check global selectedTrip
+    const isFlight = selectedTrip.type === 'flight';
+    const isInternationalHotel = selectedTrip.type === 'hotel' && document.getElementById('hotel-country').value !== document.getElementById('user-country-input').value;
+    
+    let passportHTML = "";
+    if (isFlight || isInternationalHotel) {
+        passportHTML = `<div class="input-wrapper" style="margin-top:10px;"><label>Passport Number *</label><input type="text" id="${typeLabel.toLowerCase()}${index}-passport" class="input-field mandatory passport-field" placeholder="A12345678" maxlength="9"></div>`;
+    }
+
     return `
     <div class="passenger-item" style="border-left: 4px solid ${color};">
         <h4 class="form-section-title">${typeLabel} ${index} Details</h4>
         <div class="grid-2"><div class="input-wrapper"><label>First Name *</label><input type="text" id="${typeLabel.toLowerCase()}${index}-first" class="input-field mandatory"></div><div class="input-wrapper"><label>Last Name *</label><input type="text" id="${typeLabel.toLowerCase()}${index}-last" class="input-field mandatory"></div></div>
         <div class="grid-2"><div class="input-wrapper"><label>Gender</label><select class="input-field mandatory"><option>Male</option><option>Female</option></select></div><div class="input-wrapper"><label>Age</label><input type="number" class="input-field mandatory" width="50px" ${ageLimit} oninput="if(this.value.length > 3) this.value = this.value.slice(0,3);"></div></div>
         <div class="grid-2"><div class="input-wrapper"><label>Nationality</label><input type="text" class="input-field mandatory" value="${country}"></div>${extraFieldHTML}</div>
+        ${passportHTML}
     </div>`;
 }
  
 function proceedToPayment() {
     let valid = true;
-    document.querySelectorAll('.mandatory').forEach(el => { if(!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = '#E5E7EB'; } });
+    document.querySelectorAll('.mandatory').forEach(el => { 
+        if(!el.value) { el.style.borderColor = 'red'; valid = false; } else { el.style.borderColor = '#E5E7EB'; } 
+    });
+    
+    // PASSPORT VALIDATION LOGIC
+    const passportFields = document.querySelectorAll('.passport-field');
+    const passportRegex = /^[A-Za-z][0-9]{8}$/;
+    
+    let passportValid = true;
+    passportFields.forEach(field => {
+        if (!passportRegex.test(field.value)) {
+            field.style.borderColor = 'red';
+            passportValid = false;
+        } else {
+            field.style.borderColor = '#E5E7EB';
+        }
+    });
+
+    if(!passportValid && passportFields.length > 0) { showToast("Invalid Passport Format (Letter + 8 Numbers)", "error"); return; }
+
     if(!valid) return showToast("Please fill all fields.", "error");
     const phoneInput = document.getElementById('contact-phone');
     if (phoneInput && phoneInput.value.length !== 10) { showToast("Mobile number must be 10 digits.", "error"); phoneInput.style.borderColor = 'red'; return; }
@@ -1020,9 +1210,13 @@ function proceedToPayment() {
     if (selectedTrip.type === 'flight') {
         const pCount = parseInt(document.getElementById('flight-passengers').value) || 1;
         generateSeatMap(pCount);
+        currentBookingStep = 2; // Seats
+        updateBackBtnVisibility();
         document.getElementById('booking-step-1').classList.add('hidden');
         document.getElementById('booking-step-seats').classList.remove('hidden');
     } else {
+        currentBookingStep = 3; // Payment
+        updateBackBtnVisibility();
         document.getElementById('booking-step-1').classList.add('hidden');
         document.getElementById('booking-step-payment').classList.remove('hidden');
         document.getElementById('btn-proceed').classList.add('hidden');
@@ -1030,38 +1224,80 @@ function proceedToPayment() {
     }
 }
 
-// SEAT SELECTION
+// --- UPDATED SEAT SELECTION WITH EVENT DELEGATION ---
 function generateSeatMap(passengerCount) {
     const grid = document.getElementById('seat-map-grid');
     grid.innerHTML = '';
     selectedSeats = [];
     document.getElementById('seats-to-select').innerText = passengerCount;
+    // Calculate Surcharge based on currency (approx 5 USD)
+    const surchargeAmount = Math.round(5 * getCurrencyInfo().rate);
+    document.getElementById('window-surcharge-disp').innerText = surchargeAmount;
+
+    // Use Event Delegation for better performance
+    // Remove existing listener if any to prevent duplicates
+    const newGrid = grid.cloneNode(false); 
+    grid.parentNode.replaceChild(newGrid, grid);
+    
+    // 32 seats total (8 rows x 4 cols)
     for (let i = 1; i <= 32; i++) {
         const seat = document.createElement('div');
         seat.className = 'seat available';
+        seat.dataset.seatId = i; // Store ID
+        
+        // Window logic: Col 1 and 4 are windows. 
+        const isWindow = (i % 4 === 1 || i % 4 === 0);
+        if(isWindow) seat.classList.add('window');
+
         if (Math.random() < 0.3) { seat.className = 'seat occupied'; }
-        seat.onclick = function() {
-            if (seat.classList.contains('occupied')) return;
-            if (seat.classList.contains('selected')) {
-                seat.classList.remove('selected'); selectedSeats.pop();
-            } else {
-                if (selectedSeats.length < passengerCount) { seat.classList.add('selected'); selectedSeats.push(i); } else { showToast(`Max ${passengerCount} seats allowed.`, "error"); }
-            }
-        };
-        grid.appendChild(seat);
+        
+        newGrid.appendChild(seat);
     }
+    
+    // Delegate Click Event
+    newGrid.onclick = function(e) {
+        if (!e.target.classList.contains('seat')) return;
+        const seat = e.target;
+        const i = parseInt(seat.dataset.seatId);
+        const isWindow = (i % 4 === 1 || i % 4 === 0);
+
+        if (seat.classList.contains('occupied')) return;
+        
+        if (seat.classList.contains('selected')) {
+            seat.classList.remove('selected'); selectedSeats.pop();
+            // Remove surcharge
+            if(isWindow) {
+                 selectedTrip.seatSurcharge -= surchargeAmount;
+                 recalcTotal();
+            }
+        } else {
+            if (selectedSeats.length < passengerCount) { 
+                seat.classList.add('selected'); 
+                selectedSeats.push(i); 
+                // Add surcharge
+                if(isWindow) {
+                    if(!selectedTrip.seatSurcharge) selectedTrip.seatSurcharge = 0;
+                    selectedTrip.seatSurcharge += surchargeAmount;
+                    recalcTotal();
+                }
+            } else { showToast(`Max ${passengerCount} seats allowed.`, "error"); }
+        }
+    };
 }
 
 function confirmSeats() {
     const pCount = parseInt(document.getElementById('flight-passengers').value) || 1;
     if (selectedSeats.length !== pCount) { return showToast(`Please select ${pCount} seats.`, "error"); }
+    
+    currentBookingStep = 3; // Payment
+    updateBackBtnVisibility();
     document.getElementById('booking-step-seats').classList.add('hidden');
     document.getElementById('booking-step-payment').classList.remove('hidden');
     document.getElementById('btn-proceed').classList.add('hidden');
     document.getElementById('btn-pay-confirm').classList.remove('hidden');
 }
 
-// PROMO & COINS LOGIC
+// PROMO & COINS LOGIC UPDATED FOR PARTIAL USAGE
 function applyPromoCode() {
     const code = document.getElementById('promo-code-input').value.trim().toUpperCase();
     const msg = document.getElementById('promo-message');
@@ -1081,21 +1317,34 @@ function applyPromoCode() {
     document.getElementById('promo-code-input').disabled = true; 
 }
 
-function toggleCoinRedemption() {
-    const checkBox = document.getElementById('use-coins-check');
-    if (checkBox.checked) {
-        const coinVal = getCoinValue();
-        const discount = loggedInUser.coins * coinVal;
-        selectedTrip.coinsRedeemed = discount; 
-        showToast("Coins Applied!", "success");
-    } else {
-        selectedTrip.coinsRedeemed = 0;
+function applyCoins() {
+    const inputVal = parseInt(document.getElementById('coin-redeem-input').value) || 0;
+    if (inputVal > loggedInUser.coins) {
+        showToast("Insufficient Coins balance.", "error");
+        return;
     }
+    if (inputVal < 0) return;
+
+    const coinVal = getCoinValue();
+    const discount = inputVal * coinVal;
+    
+    // Cap discount at trip total
+    if (discount > selectedTrip.total + (selectedTrip.coinsRedeemed || 0)) {
+         showToast("Discount exceeds trip cost.", "error");
+         return;
+    }
+
+    selectedTrip.coinsRedeemed = discount;
+    selectedTrip.coinsUsed = inputVal; // Track amount of coins used
+    showToast(`Redeemed ${inputVal} coins!`, "success");
     recalcTotal();
 }
 
 function recalcTotal() {
     let newTotal = selectedTrip.originalTotal - selectedTrip.discountApplied - selectedTrip.coinsRedeemed;
+    // Add seat surcharge
+    if(selectedTrip.seatSurcharge) newTotal += selectedTrip.seatSurcharge;
+    
     if(newTotal < 0) newTotal = 0;
     selectedTrip.total = newTotal;
     document.getElementById('modal-total').innerText = `${selectedTrip.symbol}${Math.round(selectedTrip.total)}`;
@@ -1130,8 +1379,8 @@ function generateTicket() {
     if(loggedInUser) {
         const earnedCoins = Math.floor(selectedTrip.total * 0.05);
         let coinsUsedCount = 0;
-        if(selectedTrip.coinsRedeemed > 0) {
-             coinsUsedCount = loggedInUser.coins; 
+        if(selectedTrip.coinsUsed > 0) {
+             coinsUsedCount = selectedTrip.coinsUsed; 
         }
         loggedInUser.coins = (loggedInUser.coins - coinsUsedCount) + earnedCoins;
         document.getElementById('reward-earned-msg').innerText = `🪙 You earned ${earnedCoins} Tripify Coins!`;
@@ -1158,6 +1407,9 @@ function generateTicket() {
     }
  
     populateTicketView(selectedTrip.passengerName, pnr, selectedTrip);
+    currentBookingStep = 4; // Success
+    updateBackBtnVisibility();
+    
     document.getElementById('booking-step-payment').classList.add('hidden');
     document.getElementById('modal-footer-action').classList.add('hidden');
     document.getElementById('booking-step-3').classList.remove('hidden');
@@ -1181,7 +1433,39 @@ function populateTicketView(pName, pnr, tripData) {
     }
 }
  
-// --- UTILS ---
+// --- UTILS & NAVIGATION ---
+function handleModalBack() {
+    if (currentBookingStep === 3) { // Payment -> Seats (if flight) or Contact (if hotel)
+        if (selectedTrip.type === 'flight') {
+            currentBookingStep = 2;
+            document.getElementById('booking-step-payment').classList.add('hidden');
+            document.getElementById('booking-step-seats').classList.remove('hidden');
+            document.getElementById('btn-pay-confirm').classList.add('hidden');
+            // No proceed button needed here based on user request (only Confirm Seats)
+        } else {
+            currentBookingStep = 1;
+            document.getElementById('booking-step-payment').classList.add('hidden');
+            document.getElementById('booking-step-1').classList.remove('hidden');
+            document.getElementById('btn-pay-confirm').classList.add('hidden');
+            document.getElementById('btn-proceed').classList.remove('hidden');
+        }
+    } else if (currentBookingStep === 2) { // Seats -> Contact
+        currentBookingStep = 1;
+        document.getElementById('booking-step-seats').classList.add('hidden');
+        document.getElementById('booking-step-1').classList.remove('hidden');
+    }
+    updateBackBtnVisibility();
+}
+
+function updateBackBtnVisibility() {
+    const backBtn = document.querySelector('.back-icon');
+    if (currentBookingStep > 1 && currentBookingStep < 4) {
+        backBtn.style.display = 'block';
+    } else {
+        backBtn.style.display = 'none';
+    }
+}
+
 function switchTab(tab) {
     document.getElementById('flight-section').classList.toggle('hidden', tab !== 'flights');
     document.getElementById('hotel-section').classList.toggle('hidden', tab !== 'hotels');
@@ -1218,10 +1502,9 @@ function showHistory() {
         const isCompleted = isPastDate(relevantDate) && b.status === 'Confirmed';
         
         if (isCompleted) {
-            // PAST: Download & Delete
+            // PAST: Completed -> ONLY Delete Button (REMOVED DOWNLOAD)
             actionBtns = `
                 <span class="badge-completed" style="margin-right:10px;">Completed</span>
-                <button class="btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem; margin-right:5px;" onclick="downloadTicket()">Download</button>
                 <button class="btn-danger" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="initDeleteBooking('${b.pnr}')">Delete</button>
             `;
         } else if(b.status === 'Confirmed') {
@@ -1322,11 +1605,130 @@ function recoverBookingPin() {
     if (b) { alert(`GMAIL SIMULATION:\n\nBooking PIN Recovery for PNR ${b.pnr}\nYour PIN is: ${b.pin}`); }
 }
  
-function downloadTicket() { window.print(); }
+// --- SHARE TICKET FEATURE (NEW) ---
+function shareTicket() {
+    const pnr = document.getElementById('ticket-pnr').innerText;
+    const airline = document.getElementById('ticket-airline').innerText;
+    const date = document.getElementById('ticket-date').innerText;
+    
+    const text = `I'm flying with ${airline} on ${date}! My Tripify PNR is ${pnr}.`;
+    
+    // Check if browser supports sharing
+    if (navigator.share) {
+        navigator.share({
+            title: 'My Tripify Ticket',
+            text: text,
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        // Fallback for desktop
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
+    }
+}
+
+// --- UPDATED PRINT FUNCTION ---
+function downloadTicket() { 
+    window.print(); 
+}
+
 function closeModal() { 
     document.getElementById('booking-modal').classList.add('hidden'); 
+    currentBookingStep = 0; // Reset Step
+    updateBackBtnVisibility();
     setTimeout(() => { 
         document.querySelector('.success-banner').classList.remove('hidden'); 
         document.getElementById('reward-earned-msg').classList.remove('hidden');
     }, 500);
+}
+
+// --- FOOTER MODAL LOGIC (NEW) ---
+function openInfoModal(type) {
+    const title = document.getElementById('info-modal-title');
+    const body = document.getElementById('info-modal-body');
+    
+    const content = {
+        'about': {
+            title: 'About Us',
+            text: '<h3>Welcome to Tripify!</h3><p style="margin-top:1rem; line-height:1.6;">At Tripify, we believe that traveling should be as seamless and fluid as water—which is why our motto is "Liquid Travel." Founded in 2026, we aimed to disrupt the fragmented travel booking industry by providing a unified, clutter-free, and beautifully designed platform for flights and hotels.</p><p style="margin-top:1rem; line-height:1.6;">Our mission is to empower travelers with transparent pricing, lightning-fast searches, and a rewarding loyalty program (Tripify Coins). With access to over 800 global destinations and partnerships with top-tier airlines and hotel chains, we curate premium experiences tailored to your needs.</p><p style="margin-top:1rem; line-height:1.6;">Whether you are planning a quick domestic getaway or a luxurious international vacation, Tripify ensures your journey starts perfectly before you even pack your bags.</p>'
+        },
+        'careers': {
+            title: 'Careers',
+            text: '<h3>Join the Tripify Team</h3><p style="margin-top:1rem; line-height:1.6;">We are always looking for passionate, innovative, and driven individuals to join our growing team. At Tripify, we foster a culture of creativity, inclusivity, and continuous learning.</p><h4 style="margin-top:1.5rem; color:var(--primary);">Open Positions (Mumbai HQ / Remote)</h4><ul style="margin-top:0.5rem; margin-left:1.5rem; line-height:1.8;"><li><strong>Senior Frontend Engineer:</strong> React, Vanilla JS, Glassmorphism UI expertise required.</li><li><strong>Travel Operations Manager:</strong> 3+ years experience in global travel logistics.</li><li><strong>Customer Success Specialist:</strong> 24/7 global support team, multilingual preferred.</li><li><strong>UI/UX Designer:</strong> Portfolio demonstrating modern, liquid, and minimalist design.</li></ul><p style="margin-top:1.5rem;">To apply, please send your resume and a brief cover letter to <strong>careers@tripify.com</strong>. We offer competitive salaries, unlimited PTO, and, of course, massive travel perks!</p>'
+        },
+        'blog': {
+            title: 'Tripify Blog',
+            text: '<h3>Latest Travel Insights</h3><div style="margin-top:1.5rem; border-left:4px solid var(--primary); padding-left:1rem;"><h4 style="color:var(--text-main);">Top 10 Hidden Gems in Southeast Asia</h4><p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Published on Feb 25, 2026</p><p>Discover the untouched beaches of Vietnam and the secret mountain temples of Thailand...</p></div><div style="margin-top:1.5rem; border-left:4px solid var(--primary); padding-left:1rem;"><h4 style="color:var(--text-main);">How to Maximize Your Tripify Coins</h4><p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Published on Jan 12, 2026</p><p>Learn the best strategies to earn and redeem your loyalty points for free business class upgrades...</p></div><div style="margin-top:1.5rem; border-left:4px solid var(--primary); padding-left:1rem;"><h4 style="color:var(--text-main);">The Future of Liquid Travel</h4><p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem;">Published on Dec 05, 2025</p><p>A deep dive into how seamless digital interfaces are changing the way we explore the globe...</p></div>'
+        },
+        'help': {
+            title: 'Help Center',
+            text: '<h3>How can we help you?</h3><p style="margin-top:1rem; line-height:1.6;">Our dedicated support team is available 24/7 to assist you with any booking issues, cancellations, or general inquiries.</p><h4 style="margin-top:1.5rem; color:var(--primary);">Frequently Asked Questions</h4><p style="margin-top:1rem;"><strong>Q: How do I cancel a booking?</strong><br>A: Go to "My Bookings", select your active trip, and click "Cancel". You will need your secure 4-digit Booking PIN.</p><p style="margin-top:1rem;"><strong>Q: What is a Booking PIN?</strong><br>A: It is a secure 4-digit code you create during checkout to protect your specific ticket from unauthorized modifications.</p><p style="margin-top:1rem;"><strong>Q: When will I get my refund?</strong><br>A: Refunds for eligible cancellations are processed back to your original payment method within 5-7 business days.</p><p style="margin-top:1.5rem;">Still need help? Email us at <strong>support@tripify.com</strong> or use the AI Chatbot in the bottom right corner!</p>'
+        },
+        'terms': {
+            title: 'Terms of Service',
+            text: '<h3>Terms and Conditions</h3><p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Last Updated: January 1, 2026</p><p style="margin-top:1rem; line-height:1.6;">1. <strong>Acceptance of Terms:</strong> By accessing and using Tripify, you agree to be bound by these Terms of Service. If you do not agree, please do not use our platform.</p><p style="margin-top:1rem; line-height:1.6;">2. <strong>Booking Policies:</strong> All bookings are subject to availability. Prices fluctuate based on airline and hotel demand. A booking is only confirmed once a PNR is issued.</p><p style="margin-top:1rem; line-height:1.6;">3. <strong>User Accounts:</strong> You are responsible for maintaining the confidentiality of your account credentials, including your Login PIN and Booking PINs.</p><p style="margin-top:1rem; line-height:1.6;">4. <strong>Tripify Coins:</strong> Coins hold no actual cash value outside of the Tripify ecosystem and cannot be withdrawn to a bank account. 1 Coin represents a discount value of ₹0.25 on future bookings.</p><p style="margin-top:1rem; line-height:1.6;">5. <strong>Liability:</strong> Tripify acts as an aggregator. We are not liable for flight delays, hotel overbookings, or operational failures of the actual service providers.</p>'
+        },
+        'privacy': {
+            title: 'Privacy Policy',
+            text: '<h3>Your Privacy Matters</h3><p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Last Updated: January 1, 2026</p><p style="margin-top:1rem; line-height:1.6;">At Tripify, we are committed to protecting your personal data. This policy outlines how we collect, use, and safeguard your information.</p><p style="margin-top:1rem; line-height:1.6;"><strong>Data Collection:</strong> We collect your name, email, phone number, and passport details solely for the purpose of fulfilling your travel reservations. We do not sell your personal data to third-party marketers.</p><p style="margin-top:1rem; line-height:1.6;"><strong>Security:</strong> We utilize industry-standard encryption and local storage mechanisms to keep your data secure. Your passwords and PINs are stored securely within your localized database.</p><p style="margin-top:1rem; line-height:1.6;"><strong>Cookies:</strong> We use essential cookies to maintain your login session, remember your theme preference (Dark/Light mode), and save your recent searches for a better user experience.</p><p style="margin-top:1rem; line-height:1.6;"><strong>Data Deletion:</strong> You have the right to request the deletion of your account and history at any time through your profile settings or by contacting our data protection officer.</p>'
+        }
+    };
+
+    if(content[type]) {
+        title.innerText = content[type].title;
+        body.innerHTML = content[type].text;
+        document.getElementById('info-modal').classList.remove('hidden');
+    }
+}
+
+function closeInfoModal() {
+    document.getElementById('info-modal').classList.add('hidden');
+}
+
+// --- CHATBOT LOGIC ---
+function toggleChat() {
+    const chat = document.getElementById('chatbot-widget');
+    const icon = document.getElementById('chat-toggle-icon');
+    chat.classList.toggle('closed');
+    icon.innerText = chat.classList.contains('closed') ? '▲' : '▼';
+}
+
+function handleChatEnter(e) {
+    if (e.key === 'Enter') sendChatMessage();
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    appendMessage(text, 'user');
+    input.value = '';
+    
+    setTimeout(() => {
+        let response = "I'm not sure about that. Try asking about bookings, payments, or passports.";
+        const lower = text.toLowerCase();
+        
+        if (lower.includes('hello') || lower.includes('hi')) response = "Hello! How can I assist you with your travel plans?";
+        else if (lower.includes('book') || lower.includes('flight') || lower.includes('hotel')) response = "You can search for flights and hotels using the search bar on the homepage.";
+        else if (lower.includes('payment') || lower.includes('pay')) response = "We accept Credit Cards, UPI, and Net Banking. You can also redeem Tripify Coins!";
+        else if (lower.includes('passport')) response = "Passports must be 9 characters: 1 Letter followed by 8 Numbers (e.g., A12345678).";
+        else if (lower.includes('contact') || lower.includes('support')) response = "You can reach our human support team at support@tripify.com.";
+        else if (lower.includes('coin') || lower.includes('reward')) response = "You earn coins on every booking! Use them to get discounts on future trips.";
+        // New Features
+        else if (lower.includes('refund') || lower.includes('cancel')) response = "Cancellation policies vary by hotel/airline. Check your booking details for specifics.";
+        else if (lower.includes('baggage') || lower.includes('luggage')) response = "Standard Economy includes 25kg Check-in. Excess baggage can be purchased at the counter.";
+        else if (lower.includes('check-in') || lower.includes('boarding')) response = "Online check-in opens 48 hours before departure. Use your PNR to access it.";
+        else if (lower.includes('wifi') || lower.includes('internet')) response = "Most of our partner hotels offer free high-speed WiFi. Check the 'Amenities' section.";
+
+        appendMessage(response, 'bot');
+    }, 600);
+}
+
+function appendMessage(text, sender) {
+    const body = document.getElementById('chat-body');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${sender}`;
+    div.innerText = text;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
 }
