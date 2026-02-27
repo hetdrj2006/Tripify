@@ -1,3 +1,16 @@
+// --- FIREBASE SETUP ---
+const firebaseConfig = {
+    apiKey: "AIzaSyDYW_q14ZqqixLdWpd6WYo-a4gWa-zGFQ0",
+    authDomain: "tripify-f597b.firebaseapp.com",
+    projectId: "tripify-f597b",
+    storageBucket: "tripify-f597b.firebasestorage.app",
+    messagingSenderId: "761965487856",
+    appId: "1:761965487856:web:5b86b04db6f57148b58435"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// ----------------------
+
 // --- CURRENCY DATABASE ---
 const currencyData = { "India": { code: "INR", symbol: "₹", rate: 84 }, "USA": { code: "USD", symbol: "$", rate: 1 }, "UK": { code: "GBP", symbol: "£", rate: 0.79 }, "Germany": { code: "EUR", symbol: "€", rate: 0.92 }, "France": { code: "EUR", symbol: "€", rate: 0.92 }, "Italy": { code: "EUR", symbol: "€", rate: 0.92 }, "Spain": { code: "EUR", symbol: "€", rate: 0.92 }, "UAE": { code: "AED", symbol: "AED", rate: 3.67 }, "Australia": { code: "AUD", symbol: "A$", rate: 1.53 }, "Canada": { code: "CAD", symbol: "C$", rate: 1.35 }, "Singapore": { code: "SGD", symbol: "S$", rate: 1.34 }, "Japan": { code: "JPY", symbol: "¥", rate: 150 }, "China": { code: "CNY", symbol: "¥", rate: 7.2 }, "Brazil": { code: "BRL", symbol: "R$", rate: 4.95 }, "South Africa": { code: "ZAR", symbol: "R", rate: 19 }, "Thailand": { code: "THB", symbol: "฿", rate: 36 }, "Russia": { code: "RUB", symbol: "₽", rate: 92 }, "South Korea": { code: "KRW", symbol: "₩", rate: 1330 } };
  
@@ -165,44 +178,50 @@ function handleAuthProceed() {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value.trim();
     if(!email || !password) return showToast("Please enter both email and password.", "error");
-    const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
     
-    if (currentAuthMode === 'signin') {
-        const existingUser = usersDB.find(u => u.email === email);
-        if (!existingUser) { showToast("No user found. Please register.", "error"); switchAuthTab('register'); return; }
-        if (existingUser.password !== password) { showToast("Incorrect password.", "error"); return; }
-        pendingLoginUser = existingUser;
-        if (existingUser.loginPin) {
-            document.getElementById('auth-step-1').classList.add('hidden');
-            document.getElementById('auth-step-pin').classList.remove('hidden');
+    const btn = document.querySelector('.auth-body .btn-primary');
+    const oldText = btn.innerText;
+    btn.innerText = "Checking Database...";
+    btn.disabled = true;
+
+    // REAL FIREBASE DATABASE CALL
+    db.collection("users").doc(email).get().then((docSnapshot) => {
+        if (currentAuthMode === 'signin') {
+            if (!docSnapshot.exists) { 
+                btn.innerText = oldText; btn.disabled = false;
+                showToast("No user found. Please register.", "error"); switchAuthTab('register'); return; 
+            }
+            const existingUser = docSnapshot.data();
+            if (existingUser.password !== password) { 
+                btn.innerText = oldText; btn.disabled = false;
+                showToast("Incorrect password.", "error"); return; 
+            }
+            pendingLoginUser = existingUser;
+            btn.innerText = oldText; btn.disabled = false;
+            
+            if (existingUser.loginPin) {
+                document.getElementById('auth-step-1').classList.add('hidden');
+                document.getElementById('auth-step-pin').classList.remove('hidden');
+            } else {
+                document.getElementById('auth-step-1').classList.add('hidden');
+                document.getElementById('auth-step-set-pin').classList.remove('hidden');
+            }
         } else {
-            document.getElementById('auth-step-1').classList.add('hidden');
-            document.getElementById('auth-step-set-pin').classList.remove('hidden');
-        }
-    } else {
-        const existingUser = usersDB.find(u => u.email === email);
-        if (existingUser) { showToast("User already exists. Please Sign In.", "error"); switchAuthTab('signin'); return; }
-        
-        simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
-        const btn = document.querySelector('.auth-body .btn-primary');
-        const oldText = btn.innerText;
-        btn.innerText = "Sending Email...";
-        btn.disabled = true;
+            if (docSnapshot.exists) { 
+                btn.innerText = oldText; btn.disabled = false;
+                showToast("User already exists. Please Sign In.", "error"); switchAuthTab('signin'); return; 
+            }
+            
+            simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            btn.innerText = "Sending Email...";
 
-        // REAL EMAILJS LOGIC - WITH CRASH PROTECTION
-        if (typeof emailjs === 'undefined') {
-            btn.innerText = oldText; 
-            btn.disabled = false;
-            showToast("Error: Email system blocked by browser. Please disable Tracking Prevention.", "error");
-            return;
-        }
+            if (typeof emailjs === 'undefined') {
+                btn.innerText = oldText; btn.disabled = false;
+                showToast("Error: Email system blocked by browser.", "error"); return;
+            }
 
-        const templateParams = {
-            to_email: email,
-            otp_code: simulatedOTP
-        };
+            const templateParams = { to_email: email, otp_code: simulatedOTP };
 
-        try {
             emailjs.send('service_b77uqv2', 'template_2j5usvp', templateParams)
                 .then(function(response) {
                     btn.innerText = oldText; btn.disabled = false;
@@ -213,15 +232,14 @@ function handleAuthProceed() {
                 })
                 .catch(function(error) {
                     btn.innerText = oldText; btn.disabled = false;
-                    showToast("Email failed. Check console.", "error");
+                    showToast("Failed to send email. Check console.", "error");
                     console.error('EmailJS Error Details:', error);
                 });
-        } catch (err) {
-            btn.innerText = oldText; btn.disabled = false;
-            showToast("System Crash: " + err.message, "error");
-            console.error(err);
         }
-    }
+    }).catch((error) => {
+        btn.innerText = oldText; btn.disabled = false;
+        showToast("Database Error: " + error.message, "error");
+    });
 }
  
 function verifyOTP() {
@@ -238,12 +256,16 @@ function saveNewLoginPinReg() {
     const nameInput = document.getElementById('auth-name').value;
     const emailInput = document.getElementById('auth-email').value;
     const passwordInput = document.getElementById('auth-password').value;
-    const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
+    
     const newUser = { name: nameInput || emailInput.split('@')[0], email: emailInput, password: passwordInput, history: [], loginPin: pin, coins: 0 };
-    usersDB.push(newUser);
-    localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
-    loginSuccess(newUser, true);
-    closeAuthModal();
+    
+    // Save User directly to Firebase
+    db.collection("users").doc(emailInput).set(newUser).then(() => {
+        loginSuccess(newUser, true);
+        closeAuthModal();
+    }).catch((error) => {
+        showToast("Error saving account: " + error.message, "error");
+    });
 }
 
 function verifyLoginPin() {
@@ -276,42 +298,46 @@ function initForgotFlow() {
 function handleForgotOTP() {
     const email = document.getElementById('forgot-email').value.trim();
     if(!email) return showToast("Please enter your email.", "error");
-    const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
-    const existingUser = usersDB.find(u => u.email === email);
-    if(!existingUser) { showToast("Email not registered.", "error"); return; }
-    forgotPasswordEmail = email;
-    simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
     
     const btn = document.getElementById('btn-forgot-action');
     const oldText = btn.innerText;
-    btn.innerText = "Sending Email...";
+    btn.innerText = "Checking Database...";
     btn.disabled = true;
 
-    // REAL EMAILJS LOGIC
-    if (typeof emailjs === 'undefined') {
-        btn.innerText = oldText; 
-        btn.disabled = false;
-        showToast("Error: Email system blocked by browser.", "error");
-        return;
-    }
-
-    const templateParams = {
-        to_email: email,
-        otp_code: simulatedOTP
-    };
-
-    emailjs.send('service_b77uqv2', 'template_2j5usvp', templateParams)
-        .then(function(response) {
-            btn.innerText = "Verify OTP"; btn.disabled = false;
-            btn.setAttribute('onclick', 'verifyForgotOTP()');
-            document.getElementById('forgot-otp-section').classList.remove('hidden');
-            showToast("Recovery OTP sent!", "success");
-        })
-        .catch(function(error) {
+    // Check Firebase if user exists before sending OTP
+    db.collection("users").doc(email).get().then((docSnapshot) => {
+        if(!docSnapshot.exists) { 
             btn.innerText = oldText; btn.disabled = false;
-            showToast("Failed to send recovery email.", "error");
-            console.error('EmailJS Error:', error);
-        });
+            showToast("Email not registered.", "error"); return; 
+        }
+        
+        forgotPasswordEmail = email;
+        simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+        btn.innerText = "Sending Email...";
+
+        if (typeof emailjs === 'undefined') {
+            btn.innerText = oldText; btn.disabled = false;
+            showToast("Error: Email system blocked by browser.", "error");
+            return;
+        }
+
+        const templateParams = { to_email: email, otp_code: simulatedOTP };
+
+        emailjs.send('service_b77uqv2', 'template_2j5usvp', templateParams)
+            .then(function(response) {
+                btn.innerText = "Verify OTP"; btn.disabled = false;
+                btn.setAttribute('onclick', 'verifyForgotOTP()');
+                document.getElementById('forgot-otp-section').classList.remove('hidden');
+                showToast("Recovery OTP sent!", "success");
+            })
+            .catch(function(error) {
+                btn.innerText = oldText; btn.disabled = false;
+                showToast("Failed to send recovery email.", "error");
+            });
+    }).catch((error) => {
+        btn.innerText = oldText; btn.disabled = false;
+        showToast("Database Error.", "error");
+    });
 }
  
 function verifyForgotOTP() {
@@ -327,14 +353,16 @@ function verifyForgotOTP() {
 function confirmPasswordReset() {
     const newPass = document.getElementById('forgot-new-password').value.trim();
     if(!newPass) return showToast("Please enter a new password.", "error");
-    const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
-    const userIndex = usersDB.findIndex(u => u.email === forgotPasswordEmail);
-    if(userIndex !== -1) {
-       usersDB[userIndex].password = newPass;
-       localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
+    
+    // Update Password directly in Firebase
+    db.collection("users").doc(forgotPasswordEmail).update({
+        password: newPass
+    }).then(() => {
        showToast("Password updated! Please login.", "success");
        closeAuthModal();
-    } else { showToast("Error updating password.", "error"); }
+    }).catch((error) => { 
+        showToast("Error updating password: " + error.message, "error"); 
+    });
 }
  
 function loginSuccess(user, save) {
@@ -444,12 +472,12 @@ function recoverLoginPin() {
 }
 
 function updateUserInDB() {
-    localStorage.setItem('tripify_user', JSON.stringify(loggedInUser));
-    const usersDB = JSON.parse(localStorage.getItem('tripify_users_db')) || [];
-    const idx = usersDB.findIndex(u => u.email === loggedInUser.email);
-    if (idx !== -1) {
-        usersDB[idx] = loggedInUser;
-        localStorage.setItem('tripify_users_db', JSON.stringify(usersDB));
+    localStorage.setItem('tripify_user', JSON.stringify(loggedInUser)); // Keep session active for fast reloads
+    
+    // Synchronize updates (like new bookings or coins) to Firebase in the background
+    if (loggedInUser && loggedInUser.email) {
+        db.collection("users").doc(loggedInUser.email).set(loggedInUser)
+          .catch((error) => console.error("Error updating user in Firebase: ", error));
     }
 }
 
