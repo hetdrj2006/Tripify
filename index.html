@@ -3,13 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tripify | Premium Travel</title>
+    <title>Tripify | Liquid Travel</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init({
+            publicKey: "LP8LVK0GF9GXZ5SO8",
+          });
+       })();
+    </script>
 </head>
 <body>
  
+    <div class="bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <div class="bg-grid-overlay"></div>
+
     <div id="intro-overlay">
         <div class="intro-content">
             <h1 class="intro-logo">Tripify.</h1>
@@ -22,9 +39,9 @@
         </div>
     </div>
  
-    <nav class="navbar">
-        <div class="logo" onclick="switchTab('flights')" style="display: flex; align-items: center; cursor: pointer;">
-            <img src="logo.jpg" alt="Tripify Logo" style="height: 40px; margin-right: 10px;">
+    <nav class="navbar liquid-glass">
+        <div class="logo" onclick="switchTab('flights')">
+            <img src="logo.jpg" alt="Tripify" style="height: 40px; margin-right: 10px;" onerror="this.style.display='none'">
             Tripify.
         </div>
         <div class="nav-links">
@@ -38,10 +55,10 @@
  
     <header id="main-hero" class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">“Your gateway to unforgettable journeys”</h1>
+            <h1 class="hero-title">“Your gateway to liquid journeys”</h1>
             <p class="hero-subtitle">800+ Destinations. Comprehensive Data. Zero Clutter.</p>
             
-            <div id="flight-section" class="search-container">
+            <div id="flight-section" class="search-container liquid-glass">
                <div class="search-context-bar">
                    <div id="recent-searches" class="recent-chips-container"></div>
 
@@ -126,11 +143,11 @@
                </div>
                
                <div class="search-action">
-                   <button onclick="handleSearch('flight')">Search Flights</button>
+                   <button onclick="handleSearch('flight')" class="btn-glow">Search Flights</button>
                </div>
            </div>
  
-           <div id="hotel-section" class="search-container hidden">
+           <div id="hotel-section" class="search-container liquid-glass hidden">
                <div class="search-grid">
                    <div class="input-group">
                        <label>Select Country</label>
@@ -190,16 +207,16 @@
                    </div>
                </div>
                <div class="search-action">
-                   <button onclick="handleSearch('hotel')">Search Hotels</button>
+                   <button onclick="handleSearch('hotel')" class="btn-glow">Search Hotels</button>
                </div>
            </div>
         </div>
     </header>
  
     <main id="main-content" class="hidden">
-        <div id="map-wrapper"><div id="map-container"></div></div>
+        <div id="map-wrapper" class="liquid-glass"><div id="map-container"></div></div>
         
-        <section id="filters-container" class="filters-bar">
+        <section id="filters-container" class="filters-bar liquid-glass">
             <div class="filter-header">
                 <span>⚡ Filters</span>
                 <button onclick="clearFilters()" class="btn-clear-filters">Reset</button>
@@ -253,34 +270,69 @@
         </section>
         <section id="results-area" class="results-list"></section>
     </main>
+
+    <div id="floating-compare-bar" class="floating-bar hidden liquid-glass">
+        <div class="compare-info">
+            <span id="compare-count" style="font-weight: 800; color: #FCD34D;">0</span> items selected
+        </div>
+        <button class="btn-glow small" onclick="openCompareModal()">Compare Now <i class="fas fa-exchange-alt"></i></button>
+    </div>
  
     <main id="history-view" class="hidden">
         <div class="history-container">
-            <h2 style="margin-bottom: 1.5rem;">My Bookings</h2>
+            <h2 style="margin-bottom: 2rem; font-size: 2.5rem; color: var(--primary);">My Journey Log</h2>
             <div id="history-list" class="history-list"></div>
             <button class="btn-secondary" onclick="switchTab('flights')" style="margin-top: 2rem;">Back to Search</button>
         </div>
     </main>
  
+    <div id="compare-modal" class="modal-overlay hidden">
+        <div class="modal-content wide-modal liquid-glass" style="height: auto; max-height: 90vh;">
+            <div class="modal-header">
+                <h2>Compare & Save</h2>
+                <span class="close-btn" onclick="closeCompareModal()">&times;</span>
+            </div>
+            <div id="compare-content" class="compare-grid form-scroll-area"></div>
+        </div>
+    </div>
+
+    <div id="info-modal" class="modal-overlay hidden">
+        <div class="modal-content liquid-glass" style="max-width: 700px;">
+            <div class="modal-header">
+                <h2 id="info-modal-title">Information</h2>
+                <span class="close-btn" onclick="closeInfoModal()">&times;</span>
+            </div>
+            <div id="info-modal-body" class="form-scroll-area" style="padding: 2.5rem; max-height: 65vh; font-size: 1.05rem; color: var(--text-main);">
+                </div>
+            <div style="padding: 1.5rem; border-top: 1px solid var(--border); background: var(--surface);">
+                <button class="btn-primary full-width-btn" onclick="closeInfoModal()">Acknowledge & Close</button>
+            </div>
+        </div>
+    </div>
+
     <div id="details-modal" class="modal-overlay hidden">
-        <div class="modal-content small-modal">
-            <span class="close-btn" onclick="closeDetailsModal()">&times;</span>
-            <div class="modal-header"><h2 id="detail-airline">Details</h2></div>
-            <div class="detail-grid-container" id="detail-content"></div>
-            <div style="padding: 1.5rem;"><button class="btn-secondary full-width-btn" onclick="closeDetailsModal()">Close</button></div>
+        <div class="modal-content liquid-glass" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="detail-title">Details</h2>
+                <span class="close-btn" onclick="closeDetailsModal()">&times;</span>
+            </div>
+            <div id="detail-content" class="detail-modern-layout form-scroll-area"></div>
+            <div style="padding: 1.5rem;"><button class="btn-primary full-width-btn" onclick="closeDetailsModal()">Close Details</button></div>
         </div>
     </div>
  
     <div id="profile-modal" class="modal-overlay hidden">
-        <div class="modal-content small-modal">
-            <span class="close-btn" onclick="closeProfileModal()">&times;</span>
-            <div class="modal-header"><h2>My Profile</h2></div>
+        <div class="modal-content small-modal liquid-glass">
+            <div class="modal-header">
+                <h2>My Profile</h2>
+                <span class="close-btn" onclick="closeProfileModal()">&times;</span>
+            </div>
             <div id="profile-main-view" style="padding: 2rem;">
                 <div class="profile-info" style="margin-bottom: 2rem; text-align: center;">
-                    <div style="width: 60px; height: 60px; background: #2563EB; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1rem auto; font-weight: 700;" id="profile-avatar">U</div>
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1rem auto; font-weight: 700; box-shadow: 0 10px 20px rgba(37,99,235,0.3);" id="profile-avatar">U</div>
                     <h3 id="profile-name">User Name</h3>
                     <p id="profile-email" class="text-muted">email@example.com</p>
-                    <div class="wallet-card"><span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Tripify Coins</span><div style="font-size: 2rem; font-weight: 800; margin: 0.5rem 0;" id="profile-coins">0</div><small id="coin-rate-text">1 Coin = ₹0.25</small></div>
+                    <div class="wallet-card liquid-glass"><span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Tripify Coins</span><div style="font-size: 2.5rem; font-weight: 800; margin: 0.5rem 0; color: #fbbf24; text-shadow: 0 2px 10px rgba(251, 191, 36, 0.4);" id="profile-coins">0</div><small id="coin-rate-text">1 Coin = ₹0.25</small></div>
                 </div>
                 <div class="profile-actions" style="display: flex; flex-direction: column; gap: 1rem;">
                     <button class="btn-secondary full-width-btn" onclick="openChangePassword()">Change Password</button>
@@ -294,9 +346,11 @@
     </div>
 
     <div id="cancel-modal" class="modal-overlay hidden">
-        <div class="modal-content small-modal">
-            <span class="close-btn" onclick="closeCancelModal()">&times;</span>
-            <div class="modal-header"><h2 id="cancel-modal-title">Cancel Booking</h2></div>
+        <div class="modal-content small-modal liquid-glass">
+            <div class="modal-header">
+                <h2 id="cancel-modal-title">Cancel Booking</h2>
+                <span class="close-btn" onclick="closeCancelModal()">&times;</span>
+            </div>
             <div style="padding: 2rem;">
                 <p id="cancel-modal-desc" style="margin-bottom: 1.5rem; color: #4B5563;">To confirm, please enter your <strong>Booking PIN</strong> set during checkout.</p>
                 <div class="input-wrapper">
@@ -312,7 +366,7 @@
     </div>
  
     <div id="auth-modal" class="modal-overlay hidden">
-        <div class="modal-content small-modal auth-container">
+        <div class="modal-content small-modal auth-container liquid-glass">
             <span class="close-btn" onclick="closeAuthModal()">&times;</span>
             <div id="auth-step-1">
                <div class="auth-tabs"><button id="tab-signin" class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button><button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Register</button></div>
@@ -334,15 +388,11 @@
     </div>
  
     <div id="booking-modal" class="modal-overlay hidden">
-        <div class="modal-content wide-modal">
-            <button class="close-btn" onclick="closeModal()">&times;</button>
+        <div class="modal-content wide-modal liquid-glass">
             <div class="modal-header">
+                <span class="back-icon" onclick="handleModalBack()" title="Go Back" style="display:none;">←</span>
                 <h2>Booking Details</h2>
-                <div class="trip-summary-banner">
-                    <div><span class="lbl" id="summary-lbl-1">Airline</span><strong id="modal-trip-name">Flight</strong></div>
-                    <div><span class="lbl" id="summary-lbl-2">Class</span><span id="modal-trip-class" class="badge-eco">Economy</span></div>
-                    <div style="text-align:right"><span class="lbl">Total</span><strong id="modal-total" class="text-blue">$0</strong></div>
-                </div>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
             </div>
             <div id="booking-scroll-container" class="form-scroll-area">
                <div id="booking-step-1">
@@ -352,26 +402,53 @@
                        <div class="input-wrapper"><label>Mobile Number *</label><div style="display: flex; gap: 10px;"><select id="contact-country-code" class="input-select" style="width: 80px; flex-shrink: 0;"><option value="+91">+91</option><option value="+1">+1</option><option value="+44">+44</option><option value="+971">+971</option></select><input type="tel" id="contact-phone" class="input-field mandatory" placeholder="9876543210" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"></div></div>
                    </div>
                    <hr class="divider">
+                   <div class="booking-summary-card">
+                        <div class="summary-row">
+                            <span>Total Price:</span>
+                            <span id="modal-total" class="summary-price">$0</span>
+                        </div>
+                        <div class="summary-row small">
+                            <span id="summary-lbl-1">Type</span>
+                            <span id="modal-trip-name">...</span>
+                        </div>
+                         <div class="summary-row small">
+                            <span id="summary-lbl-2">Class</span>
+                            <span id="modal-trip-class">...</span>
+                        </div>
+                   </div>
                    <div id="guest-breakdown-section"></div>
                    <div id="passenger-forms"></div>
                </div>
                <div id="booking-step-seats" class="hidden">
                    <h4 class="form-section-title">Select Seats</h4>
-                   <p style="margin-bottom: 1rem; color: #6B7280;">Please select <strong id="seats-to-select">1</strong> seat(s).</p>
-                   <div class="plane-container"><div class="cockpit"></div><div class="seat-grid" id="seat-map-grid"></div></div>
-                   <div class="seat-legend"><div class="legend-item"><div class="seat available"></div><span>Available</span></div><div class="legend-item"><div class="seat occupied"></div><span>Occupied</span></div><div class="legend-item"><div class="seat selected"></div><span>Selected</span></div></div>
+                   <p style="margin-bottom: 1rem; color: #6B7280;">Please select <strong id="seats-to-select">1</strong> seat(s). <span style="font-size:0.8rem; color:var(--primary)">Window seats (+<span id="window-surcharge-disp">0</span>)</span></p>
+                   <div class="plane-container">
+                       <div class="cockpit"></div>
+                       <div class="seat-grid" id="seat-map-grid"></div>
+                       <div class="wings"></div>
+                   </div>
+                   <div class="seat-legend horizontal-legend">
+                       <div class="legend-item"><div class="seat available"></div><span>Available</span></div>
+                       <div class="legend-item"><div class="seat occupied"></div><span>Occupied</span></div>
+                       <div class="legend-item"><div class="seat selected"></div><span>Selected</span></div>
+                   </div>
                    <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="confirmSeats()">Confirm Seats</button>
                </div>
                <div id="booking-step-payment" class="hidden">
                    <h3 style="margin-bottom:1.5rem;">Select Payment Mode</h3>
-                   <div class="promo-section" style="margin-bottom: 1.5rem; background: #F3F4F6; padding: 1rem; border-radius: 8px;">
+                   <div class="promo-section" style="margin-bottom: 1.5rem; padding: 1.5rem; border-radius: 12px; background: rgba(255,255,255,0.5);">
                        <div id="loyalty-redeem-block" class="hidden" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px dashed #ccc;">
                            <div style="display: flex; justify-content: space-between; align-items: center;">
                                <label style="font-weight: 700; color: #d97706; display: flex; align-items: center; gap: 5px;"><span style="font-size: 1.2rem;">🪙</span> Redeem Coins</label>
                                <span id="coin-balance-display" style="font-size: 0.9rem; font-weight: 600;">Bal: 0</span>
                            </div>
-                           <div style="margin-top: 5px;"><input type="checkbox" id="use-coins-check" onchange="toggleCoinRedemption()"><span style="font-size: 0.9rem;">Use <span id="redeemable-coins">0</span> coins to save <span id="coin-save-amount">0</span></span></div>
+                           <div style="margin-top: 10px; display:flex; gap:10px; align-items:center;">
+                                <input type="number" id="coin-redeem-input" class="input-field" placeholder="0" min="0" style="width:100px;">
+                                <button class="btn-secondary" onclick="applyCoins()" style="padding: 0.5rem 1rem;">Apply</button>
+                           </div>
+                           <p id="coin-message" style="font-size:0.8rem; margin-top:5px; color:#4B5563;">1 Coin = ₹0.25</p>
                        </div>
+
                        <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; color: #4B5563;">HAVE A PROMO CODE?</label>
                        <div style="display: flex; gap: 10px;"><input type="text" id="promo-code-input" class="input-field" placeholder="Enter Code (e.g. TRIP10)" style="flex:1;"><button class="btn-secondary" onclick="applyPromoCode()">Apply</button></div>
                        <p id="promo-message" style="font-size: 0.8rem; margin-top: 0.5rem;"></p>
@@ -386,22 +463,55 @@
                <div id="booking-step-3" class="hidden" style="text-align: center;">
                    <div class="success-banner"><h2 style="color:#10B981; margin-bottom:0.5rem;">🎉 Booking Successful!</h2><p style="color:#6B7280; font-size:0.9rem;">Your booking is confirmed.</p></div>
                    <div id="reward-earned-msg" style="background: #FFFBEB; color: #D97706; padding: 0.5rem; border-radius: 6px; margin-bottom: 1rem; font-weight: 600; font-size: 0.9rem; border: 1px solid #FCD34D;">🪙 You earned 100 Tripify Coins!</div>
-                   <div id="ticket-print-area" class="digital-ticket">
-                       <div class="ticket-top"><span class="brand">Tripify.</span><span id="ticket-status" class="status-confirmed">CONFIRMED</span></div>
-                       <div class="ticket-main">
-                           <div id="ticket-flight-header" class="ticket-route"><h2 id="ticket-origin-code">ORG</h2><span class="plane-icon">✈</span><h2 id="ticket-dest-code">DES</h2></div>
-                           <div id="ticket-hotel-header" class="ticket-hotel-header hidden"><div class="hotel-dates-row"><div class="date-group"><span class="sub-label">CHECK-IN</span><h3 id="ticket-checkin-date">2023-10-01</h3></div><div class="stay-icon"><span>🌙</span></div><div class="date-group"><span class="sub-label">CHECK-OUT</span><h3 id="ticket-checkout-date">2023-10-05</h3></div></div></div>
-                           <div class="ticket-info-grid">
-                                <div class="ticket-field"><small id="ticket-lbl-pax">Passenger</small> <strong id="ticket-passenger">Name</strong></div>
-                                <div class="ticket-field"><small id="ticket-lbl-provider">Airline</small> <strong id="ticket-airline">Provider</strong></div>
-                                <div class="ticket-field" id="ticket-date-field"><small>Date</small> <strong id="ticket-date">Date</strong></div>
-                                <div class="ticket-field"><small id="ticket-lbl-class">Class</small> <strong id="ticket-class-display">Eco</strong></div>
-                           </div>
-                           <div class="ticket-footer"><small>Booking Ref:</small> <strong id="ticket-pnr">123</strong></div>
+                   
+                   <div id="ticket-print-area" class="boarding-pass">
+                       <div class="pass-header">
+                           <span class="brand">Tripify.</span>
+                           <span class="pass-label">BOARDING PASS</span>
                        </div>
-                       <div class="barcode-strip"></div>
+                       <div class="pass-body">
+                           <div class="pass-main">
+                               <div id="ticket-flight-header">
+                                   <div class="route-large">
+                                       <h2 id="ticket-origin-code">JAI</h2>
+                                       <i class="fas fa-plane"></i>
+                                       <h2 id="ticket-dest-code">BOM</h2>
+                                   </div>
+                               </div>
+                               <div id="ticket-hotel-header" class="hidden">
+                                    <div class="route-large">
+                                        <h2 style="font-size: 2rem;">Hotel Booking</h2>
+                                    </div>
+                               </div>
+                               <div class="pass-details-grid">
+                                   <div><label id="ticket-lbl-pax">PASSENGER</label><strong id="ticket-passenger">Name</strong></div>
+                                   <div id="ticket-date-field"><label>DATE</label><strong id="ticket-date">Date</strong></div>
+                                   <div><label id="ticket-lbl-provider">CARRIER</label><strong id="ticket-airline">Airline</strong></div>
+                                   <div><label id="ticket-lbl-class">CLASS</label><strong id="ticket-class-display">Economy</strong></div>
+                                   <div id="ticket-hotel-dates" class="hidden">
+                                        <label>CHECK-IN</label><strong id="ticket-checkin-date"></strong>
+                                        <br>
+                                        <label>CHECK-OUT</label><strong id="ticket-checkout-date"></strong>
+                                   </div>
+                               </div>
+                           </div>
+                           <div class="pass-stub">
+                               <div class="stub-details">
+                                   <label>SEAT</label><strong>Any</strong>
+                               </div>
+                               <div class="stub-details">
+                                   <label>PNR</label><strong id="ticket-pnr">123</strong>
+                               </div>
+                               <div class="barcode"></div>
+                           </div>
+                       </div>
                    </div>
-                   <div class="ticket-actions"><button class="btn-secondary" onclick="downloadTicket()">Download Ticket</button><button class="btn-primary" onclick="closeModal()">Close</button></div>
+
+                   <div class="ticket-actions">
+                        <button class="btn-secondary" onclick="shareTicket()">Share Ticket 📱</button>
+                        <button class="btn-secondary" onclick="downloadTicket()">Download Ticket (PDF)</button>
+                        <button class="btn-primary" onclick="closeModal()">Close</button>
+                    </div>
                </div>
             </div>
             <div id="modal-footer-action" class="modal-footer">
@@ -414,16 +524,38 @@
     <footer class="tripify-footer">
         <div class="footer-content">
             <div class="footer-col brand-col"><h2>Tripify.</h2><p>Move the world, your way. Premium travel experiences curated just for you.</p><div class="footer-icons"><span>🐦</span><span>📘</span><span>📷</span><span>💼</span></div></div>
-            <div class="footer-col"><h3>COMPANY</h3><ul><li><a href="#">About Us</a></li><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li></ul></div>
-            <div class="footer-col"><h3>SUPPORT</h3><ul><li><a href="#">Help Center</a></li><li><a href="#">Terms of Service</a></li><li><a href="#">Privacy Policy</a></li></ul></div>
+            <div class="footer-col"><h3>COMPANY</h3><ul><li><a href="#" onclick="openInfoModal('about'); return false;">About Us</a></li><li><a href="#" onclick="openInfoModal('careers'); return false;">Careers</a></li><li><a href="#" onclick="openInfoModal('blog'); return false;">Blog</a></li></ul></div>
+            <div class="footer-col"><h3>SUPPORT</h3><ul><li><a href="#" onclick="openInfoModal('help'); return false;">Help Center</a></li><li><a href="#" onclick="openInfoModal('terms'); return false;">Terms of Service</a></li><li><a href="#" onclick="openInfoModal('privacy'); return false;">Privacy Policy</a></li></ul></div>
             <div class="footer-col newsletter-col"><h3>NEWSLETTER</h3><div class="newsletter-form"><input type="email" placeholder="Your email"><button>➝</button></div></div>
         </div>
         <div class="footer-bottom"><p>© 2026 Tripify Inc. All rights reserved.</p></div>
     </footer>
 
+    <div id="chatbot-widget" class="chatbot-container closed">
+        <div class="chat-header" onclick="toggleChat()">
+            <span>🤖 Tripify Assistant</span>
+            <span id="chat-toggle-icon">▲</span>
+        </div>
+        <div class="chat-body" id="chat-body">
+            <div class="chat-msg bot">Hello! How can I help you today?</div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Ask for help..." onkeypress="handleChatEnter(event)">
+            <button onclick="sendChatMessage()">→</button>
+        </div>
+    </div>
+
     <div id="toast-container"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          emailjs.init("LP8LVK0GF9GXZ5SO8");
+       })();
+    </script>
+
     <script src="script.js"></script>
 </body>
 </html>
