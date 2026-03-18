@@ -25,19 +25,17 @@
           });
        })();
     </script>
-
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
- 
+  
     <div class="bg-blobs">
         <div class="blob blob-1"></div>
         <div class="blob blob-2"></div>
         <div class="blob blob-3"></div>
     </div>
     <div class="bg-grid-overlay"></div>
-
     <div id="intro-overlay">
         <div class="intro-content">
             <h1 class="intro-logo">Tripify.</h1>
@@ -49,11 +47,17 @@
             <button class="btn-enter" onclick="enterSite()">Enter Site</button>
         </div>
     </div>
- 
+  
     <nav class="navbar liquid-glass">
         <div class="logo" onclick="switchTab('flights')">
             <img src="logo.jpg" alt="Tripify" style="height: 40px; margin-right: 10px;" onerror="this.style.display='none'">
             Tripify.
+        </div>
+        <!-- City Time Display: shows live local time of the selected city/country -->
+        <div id="city-time-display" class="city-time-bar" style="display:none;">
+            <span class="city-time-icon">🕐</span>
+            <span id="city-time-label">India</span>
+            <span id="city-time-clock">--:--:--</span>
         </div>
         <div class="nav-links">
             <button id="btn-flights" class="nav-btn active" onclick="switchTab('flights')">Flights</button>
@@ -63,19 +67,18 @@
             <button id="nav-user-btn" class="btn-login" onclick="handleUserNavClick()">Sign In</button>
         </div>
     </nav>
- 
+  
     <header id="main-hero" class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">“Your gateway to liquid journeys”</h1>
+            <h1 class="hero-title">"Your gateway to liquid journeys"</h1>
             <p class="hero-subtitle">800+ Destinations. Comprehensive Data. Zero Clutter.</p>
             
             <div id="flight-section" class="search-container liquid-glass">
                <div class="search-context-bar">
                    <div id="recent-searches" class="recent-chips-container"></div>
-
                    <div class="context-group">
                        <label>Your Current Location</label>
-                       <input type="text" id="user-country-input" list="country-list-data" placeholder="Type Country (e.g. India)" onchange="refreshCityLogic()">
+                       <input type="text" id="user-country-input" list="country-list-data" placeholder="Type Country (e.g. India)" onchange="refreshCityLogic(); updateCityTime();">
                        <datalist id="country-list-data"></datalist>
                    </div>
                    
@@ -92,7 +95,6 @@
                            </label>
                        </div>
                    </div>
-
                    <div class="context-group">
                        <label>Trip Type</label>
                        <div class="travel-type-wrapper">
@@ -107,7 +109,7 @@
                        </div>
                    </div>
                </div>
- 
+             
                <div class="search-grid" id="flight-search-grid">
                    <div class="input-group">
                        <label>From</label>
@@ -127,7 +129,6 @@
                        <label>Return</label>
                        <input type="date" id="flight-return-date">
                    </div>
-
                    <div class="input-group">
                        <label>Time Slot</label>
                        <select id="flight-timeslot" class="input-select">
@@ -138,7 +139,6 @@
                            <option value="night">Night (12AM - 6AM)</option>
                        </select>
                    </div>
-
                    <div class="input-group">
                        <label>Class</label>
                        <select id="flight-class" class="input-select">
@@ -157,12 +157,12 @@
                    <button onclick="handleSearch('flight')" class="btn-glow">Search Flights</button>
                </div>
            </div>
- 
-           <div id="hotel-section" class="search-container liquid-glass hidden">
+           
+            <div id="hotel-section" class="search-container liquid-glass hidden">
                <div class="search-grid">
                    <div class="input-group">
                        <label>Select Country</label>
-                       <input type="text" id="hotel-country" list="hotel-country-list" placeholder="Select Country" onchange="populateHotelCities(); resetResultsUI()" oninput="resetResultsUI()">
+                       <input type="text" id="hotel-country" list="hotel-country-list" placeholder="Select Country" onchange="populateHotelCities(); resetResultsUI(); updateCityTime();" oninput="resetResultsUI()">
                        <datalist id="hotel-country-list"></datalist>
                    </div>
                    <div class="input-group">
@@ -186,7 +186,6 @@
                        <label>Time</label>
                        <input type="time" id="hotel-checkout-time" value="11:00">
                    </div>
-
                    <div class="input-group">
                        <label>No. of Rooms</label>
                        <select id="hotel-rooms" class="input-select">
@@ -223,7 +222,7 @@
            </div>
         </div>
     </header>
- 
+  
     <main id="main-content" class="hidden">
         <div id="map-wrapper" class="liquid-glass"><div id="map-container"></div></div>
         
@@ -243,7 +242,6 @@
                         <option value="night">Night (0-6)</option>
                     </select>
                 </div>
-
                 <div class="filter-group">
                     <label>Sort By</label>
                     <select id="sort-results" class="input-select" style="min-width: 140px;" onchange="applyFilters()">
@@ -274,21 +272,19 @@
                 </div>
             </div>
         </section>
-
         <section id="results-header" class="results-header">
            <h2>Available Options</h2>
             <p id="results-count" class="text-muted">Searching...</p>
         </section>
         <section id="results-area" class="results-list"></section>
     </main>
-
     <div id="floating-compare-bar" class="floating-bar hidden liquid-glass">
         <div class="compare-info">
             <span id="compare-count" style="font-weight: 800; color: #FCD34D;">0</span> items selected
         </div>
         <button class="btn-glow small" onclick="openCompareModal()">Compare Now <i class="fas fa-exchange-alt"></i></button>
     </div>
- 
+  
     <main id="history-view" class="hidden">
         <div class="history-container">
             <h2 style="margin-bottom: 2rem; font-size: 2.5rem; color: var(--primary);">My Journey Log</h2>
@@ -296,7 +292,7 @@
             <button class="btn-secondary" onclick="switchTab('flights')" style="margin-top: 2rem;">Back to Search</button>
         </div>
     </main>
- 
+  
     <div id="compare-modal" class="modal-overlay hidden">
         <div class="modal-content wide-modal liquid-glass" style="height: auto; max-height: 90vh;">
             <div class="modal-header">
@@ -306,7 +302,6 @@
             <div id="compare-content" class="compare-grid form-scroll-area"></div>
         </div>
     </div>
-
     <div id="info-modal" class="modal-overlay hidden">
         <div class="modal-content liquid-glass" style="max-width: 700px;">
             <div class="modal-header">
@@ -320,7 +315,6 @@
             </div>
         </div>
     </div>
-
     <div id="details-modal" class="modal-overlay hidden">
         <div class="modal-content liquid-glass" style="max-width: 600px;">
             <div class="modal-header">
@@ -331,7 +325,7 @@
             <div style="padding: 1.5rem;"><button class="btn-primary full-width-btn" onclick="closeDetailsModal()">Close Details</button></div>
         </div>
     </div>
- 
+  
     <div id="profile-modal" class="modal-overlay hidden">
         <div class="modal-content small-modal liquid-glass">
             <div class="modal-header">
@@ -352,10 +346,27 @@
                 </div>
             </div>
             <div id="profile-change-pass" class="hidden" style="padding: 2rem;"><h4 style="margin-bottom:1rem;">Change Password</h4><div class="input-wrapper"><label>Current Password</label><input type="password" id="cp-current" class="input-field"></div><div class="input-wrapper" style="margin-top:0.5rem"><label>New Password</label><input type="password" id="cp-new" class="input-field"></div><div style="display: flex; gap: 10px; margin-top: 1.5rem;"><button class="btn-secondary" style="flex:1" onclick="resetProfileView()">Cancel</button><button class="btn-primary" style="flex:1" onclick="saveNewPassword()">Update</button></div></div>
-            <div id="profile-manage-pin" class="hidden" style="padding: 2rem;"><h4 id="pin-manage-title" style="margin-bottom:0.5rem;">Manage Login PIN</h4><p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1.5rem;">This PIN is required every time you log in.</p><div id="pin-set-container"><div class="input-wrapper"><label>New PIN (4 digits)</label><input type="password" id="mp-new" class="input-field" maxlength="4" style="text-align: center; letter-spacing: 5px;"></div><div style="display: flex; gap: 10px; margin-top: 1.5rem;"><button class="btn-secondary" style="flex:1" onclick="resetProfileView()">Cancel</button><button class="btn-primary" style="flex:1" onclick="saveLoginPin()">Set PIN</button></div><button id="btn-remove-pin" class="btn-danger full-width-btn hidden" style="margin-top: 1rem;" onclick="removeLoginPin()">Remove PIN</button><div class="text-right" style="margin-top: 0.5rem;"><a href="#" class="text-link" onclick="recoverLoginPin()">Forgot Login PIN?</a></div></div></div>
+            <!-- Manage PIN section — updated to reflect optional nature and allow setting/changing at any time -->
+            <div id="profile-manage-pin" class="hidden" style="padding: 2rem;">
+                <h4 id="pin-manage-title" style="margin-bottom:0.5rem;">Manage Login PIN</h4>
+                <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 1.5rem;">
+                    A Login PIN is <strong>optional</strong> but adds extra security each time you sign in. You can set, change, or remove it here at any time.
+                </p>
+                <div id="pin-set-container">
+                    <div class="input-wrapper">
+                        <label>New PIN (4 digits)</label>
+                        <input type="password" id="mp-new" class="input-field" maxlength="4" style="text-align: center; letter-spacing: 5px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                        <button class="btn-secondary" style="flex:1" onclick="resetProfileView()">Cancel</button>
+                        <button class="btn-primary" style="flex:1" onclick="saveLoginPin()">Set PIN</button>
+                    </div>
+                    <button id="btn-remove-pin" class="btn-danger full-width-btn hidden" style="margin-top: 1rem;" onclick="removeLoginPin()">Remove PIN</button>
+                    <div class="text-right" style="margin-top: 0.5rem;"><a href="#" class="text-link" onclick="recoverLoginPin()">Forgot Login PIN?</a></div>
+                </div>
+            </div>
         </div>
     </div>
-
     <div id="cancel-modal" class="modal-overlay hidden">
         <div class="modal-content small-modal liquid-glass">
             <div class="modal-header">
@@ -375,7 +386,7 @@
             </div>
         </div>
     </div>
- 
+  
     <div id="auth-modal" class="modal-overlay hidden">
         <div class="modal-content small-modal auth-container liquid-glass">
             <span class="close-btn" onclick="closeAuthModal()">&times;</span>
@@ -392,12 +403,28 @@
                </div>
            </div>
            <div id="auth-step-otp" class="hidden"><div style="text-align: center; padding: 2rem;"><h3>Verify it's you</h3><p class="text-muted" style="margin-bottom: 1.5rem;">We've sent a code to <br><strong id="otp-email-display">email</strong></p><div class="input-wrapper"><input type="text" id="auth-otp" class="input-field" placeholder="Enter 6-digit OTP" style="text-align: center; letter-spacing: 5px; font-size: 1.2rem;"></div><button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="verifyOTP()">Verify</button><button class="nav-btn" style="margin-top: 1rem;" onclick="handleAuthProceed()">Resend Code</button></div></div>
-           <div id="auth-step-set-pin" class="hidden"><div style="padding: 2rem; text-align: center;"><h3>Set Login PIN</h3><p class="text-muted" style="margin-bottom: 1.5rem;">Create a 4-digit PIN for extra security.</p><div class="input-wrapper"><input type="password" id="set-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;"></div><button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="saveNewLoginPinReg()">Save & Login</button></div></div>
+
+           <!-- Set Login PIN step — PIN is OPTIONAL. Users can skip and set/change it later from Profile. -->
+           <div id="auth-step-set-pin" class="hidden">
+               <div style="padding: 2rem; text-align: center;">
+                   <h3>Set Login PIN <span style="font-size: 0.7rem; background: #EFF6FF; color: var(--primary); padding: 2px 10px; border-radius: 20px; font-weight: 500; vertical-align: middle;">Optional</span></h3>
+                   <p class="text-muted" style="margin-bottom: 1.5rem; margin-top: 0.5rem;">
+                       A 4-digit PIN adds an extra layer of security each time you sign in.<br>
+                       <span style="font-size: 0.8rem;">You can always set or change this later from your <strong>Profile</strong>.</span>
+                   </p>
+                   <div class="input-wrapper">
+                       <input type="password" id="set-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
+                   </div>
+                   <button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="saveNewLoginPinReg()">Save PIN &amp; Login</button>
+                   <button class="btn-secondary full-width-btn" style="margin-top: 0.8rem;" onclick="skipLoginPinReg()">Skip — Set PIN Later →</button>
+               </div>
+           </div>
+
            <div id="auth-step-pin" class="hidden"><div style="padding: 2rem; text-align: center;"><h3>Enter Login PIN</h3><p class="text-muted">Security Check</p><div class="input-wrapper" style="margin-top: 1.5rem;"><input type="password" id="login-pin-input" class="input-field" placeholder="****" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;"></div><button class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="verifyLoginPin()">Enter</button><div class="text-right" style="margin-top: 1rem;"><a href="#" class="text-link" onclick="recoverLoginPinAuth()">Forgot PIN?</a></div></div></div>
            <div id="auth-step-forgot" class="hidden"><div style="padding: 2rem;"><h3 id="forgot-title" style="text-align: center; margin-bottom: 1rem;">Recover Password</h3><p id="forgot-desc" class="text-muted" style="text-align: center; margin-bottom: 1.5rem;">Enter your registered email to receive an OTP.</p><div id="forgot-email-section"><div class="input-wrapper"><label>Email Address</label><input type="email" id="forgot-email" class="input-field" placeholder="name@example.com"></div></div><div id="forgot-otp-section" class="hidden" style="margin-top: 1.5rem;"><div class="input-wrapper"><label>Enter OTP</label><input type="text" id="forgot-otp" class="input-field" placeholder="6-digit OTP" style="text-align: center; letter-spacing: 3px;"></div></div><div id="forgot-reset-section" class="hidden" style="margin-top: 1.5rem;"><div class="input-wrapper"><label>Set New Password</label><input type="password" id="forgot-new-password" class="input-field" placeholder="New Password"></div></div><button id="btn-forgot-action" class="btn-primary full-width-btn" style="margin-top: 1.5rem;" onclick="handleForgotOTP()">Send OTP</button><button id="btn-reset-confirm" class="btn-primary full-width-btn hidden" style="margin-top: 1.5rem;" onclick="confirmPasswordReset()">Update Password</button><button class="nav-btn full-width-btn" style="margin-top: 0.5rem;" onclick="closeAuthModal()">Cancel</button></div></div>
         </div>
     </div>
- 
+  
     <div id="booking-modal" class="modal-overlay hidden">
         <div class="modal-content wide-modal liquid-glass">
             <div class="modal-header">
@@ -459,7 +486,6 @@
                            </div>
                            <p id="coin-message" style="font-size:0.8rem; margin-top:5px; color:#4B5563;">1 Coin = ₹0.25</p>
                        </div>
-
                        <label style="display:block; font-size: 0.8rem; font-weight: 700; margin-bottom: 0.5rem; color: #4B5563;">HAVE A PROMO CODE?</label>
                        <div style="display: flex; gap: 10px;"><input type="text" id="promo-code-input" class="input-field" placeholder="Enter Code (e.g. TRIP10)" style="flex:1;"><button class="btn-secondary" onclick="applyPromoCode()">Apply</button></div>
                        <p id="promo-message" style="font-size: 0.8rem; margin-top: 0.5rem;"></p>
@@ -517,7 +543,6 @@
                            </div>
                        </div>
                    </div>
-
                    <div class="ticket-actions">
                         <button class="btn-secondary" onclick="shareTicket()">Share Ticket 📱</button>
                         <button class="btn-secondary" onclick="downloadTicket()">Download Ticket (PDF)</button>
@@ -527,11 +552,11 @@
             </div>
             <div id="modal-footer-action" class="modal-footer">
                 <button id="btn-proceed" class="btn-primary full-width-btn" onclick="proceedToPayment()">Proceed to Payment</button>
-                <button id="btn-pay-confirm" class="btn-primary full-width-btn hidden" onclick="confirmPayment()">Confirm & Pay</button>
+                <button id="btn-pay-confirm" class="btn-primary full-width-btn hidden" onclick="confirmPayment()">Confirm &amp; Pay</button>
             </div>
         </div>
     </div>
- 
+  
     <footer class="tripify-footer">
         <div class="footer-content">
             <div class="footer-col brand-col"><h2>Tripify.</h2><p>Move the world, your way. Premium travel experiences curated just for you.</p><div class="footer-icons"><span>🐦</span><span>📘</span><span>📷</span><span>💼</span></div></div>
@@ -541,7 +566,6 @@
         </div>
         <div class="footer-bottom"><p>© 2026 Tripify Inc. All rights reserved.</p></div>
     </footer>
-
     <div id="chatbot-widget" class="chatbot-container closed">
         <div class="chat-header" onclick="toggleChat()">
             <span>🤖 Tripify Assistant</span>
@@ -555,9 +579,7 @@
             <button onclick="sendChatMessage()">→</button>
         </div>
     </div>
-
     <div id="toast-container"></div>
-
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
@@ -566,7 +588,6 @@
           emailjs.init("LP8LVK0GF9GXZ5SO8");
        })();
     </script>
-
     <script src="script.js"></script>
 </body>
 </html>
