@@ -184,6 +184,7 @@ let generatedTripifyID = null;
 let loggedInUser = null;
 let currentAuthMode = 'signin';
 let simulatedOTP = "123456";
+let otpPurpose = "register"; // "register" or "login"
 let forgotPasswordEmail = "";
 let currentMockData = [];
 let currentSearchType = "";
@@ -400,17 +401,29 @@ function handleAuthProceed() {
                 showToast("Incorrect password.", "error"); return;
             }
             pendingLoginUser = existingUser;
-            btn.innerText = oldText; btn.disabled = false;
-            
-            if (existingUser.loginPin) {
-                // User has a PIN — ask them to enter it
-                document.getElementById('auth-step-1').classList.add('hidden');
-                document.getElementById('auth-step-pin').classList.remove('hidden');
-            } else {
-                // No PIN set — log the user in directly (PIN is optional)
-                loginSuccess(existingUser, true);
-                closeAuthModal();
+
+            // Send OTP to verify it's really the user before logging in
+            simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            otpPurpose = "login";
+            btn.innerText = "Sending OTP...";
+            if (typeof emailjs === 'undefined') {
+                btn.innerText = oldText; btn.disabled = false;
+                showToast("Error: Email system blocked by browser.", "error"); return;
             }
+            const loginTemplateParams = { to_email: email, otp_code: simulatedOTP };
+            emailjs.send('service_b77uqv2', 'template_2j5usvp', loginTemplateParams)
+                .then(function(response) {
+                    btn.innerText = oldText; btn.disabled = false;
+                    document.getElementById('auth-step-1').classList.add('hidden');
+                    document.getElementById('auth-step-otp').classList.remove('hidden');
+                    document.getElementById('otp-email-display').innerText = email;
+                    showToast("OTP sent to your email!", "success");
+                })
+                .catch(function(error) {
+                    btn.innerText = oldText; btn.disabled = false;
+                    showToast("Failed to send OTP. Check console.", "error");
+                    console.error('EmailJS Error Details:', error);
+                });
         } else {
             // --- REGISTRATION FLOW ---
             if (docSnapshot.exists) {
@@ -419,6 +432,7 @@ function handleAuthProceed() {
             }
             
             simulatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            otpPurpose = "register";
             btn.innerText = "Sending Email...";
             if (typeof emailjs === 'undefined') {
                 btn.innerText = oldText; btn.disabled = false;
@@ -447,11 +461,23 @@ function handleAuthProceed() {
  
 function verifyOTP() {
     const entered = document.getElementById('auth-otp').value;
-    if(entered === simulatedOTP) {
-        // After OTP, show the optional PIN setup step
+    if (entered === simulatedOTP) {
         document.getElementById('auth-step-otp').classList.add('hidden');
-        document.getElementById('auth-step-set-pin').classList.remove('hidden');
-    } else { showToast("Incorrect OTP.", "error"); }
+        if (otpPurpose === "login") {
+            // OTP verified for sign-in — now check if user has a PIN
+            if (pendingLoginUser && pendingLoginUser.loginPin) {
+                document.getElementById('auth-step-pin').classList.remove('hidden');
+            } else {
+                // No PIN set — log in directly
+                loginSuccess(pendingLoginUser, true);
+                closeAuthModal();
+                showToast("Logged in successfully!", "success");
+            }
+        } else {
+            // OTP verified for registration — show optional PIN setup
+            document.getElementById('auth-step-set-pin').classList.remove('hidden');
+        }
+    } else { showToast("Incorrect OTP. Please try again.", "error"); }
 }
 
 // --- SAVE PIN (with PIN) — Registration with a chosen PIN ---
